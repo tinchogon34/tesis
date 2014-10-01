@@ -28,6 +28,8 @@ procesos que ejecutaran la funciona Map del Investigador en un Web Worker
 en el cliente de W y nos traeran las resultados para luego realizar
 la funcion Reduce.
 
-[1] http://www.um.edu.ar/
-[2] proc.js hasta que aparezca un mejor nombre
-[3] http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+[1]: http://www.um.edu.ar/
+
+[2]: proc.js hasta que aparezca un mejor nombre
+
+[3]: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
