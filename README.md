@@ -1,17 +1,22 @@
-Tesis
-=====
+# Procesamiento Distribuido 
 
-Mi tesis para la carrera Ingeniera en Informatica en la [Universidad de
-Mendoza] [1].
 
-Breve descripción del tema.
+Trabajo Final para la carrera Ingeniera en Informatica en la [Universidad de
+Mendoza] [1] de:
+
++ López, Gabriel Marcos <gabriel.marcos@trustit.solutions>
+
++ Gonzalez, Martin Gerónimo <tinchogon34@gmail.com>
+
+## Breve descripción del tema.
+
 Procesamiento Distribuido web usando Javascript.
-Mi tesis propone una solución económica a las grandes cantidades de
+Nuestra tesis propone una solución económica a las grandes cantidades de
 procesamiento. La persona o entidad que desea resolver este procesamiento
-se lo deneminará genericamente como "invesitigador".
+se lo deneminará genericamente como **"invesitigador"**.
 
 Se utilizará el patrón "MapReduce" y el investigador deberá proporcionar
-tanto la función map y reduce. No tendremos ningun tipo de interferencia
+tanto la función map y reduce. No tendremos ningún tipo de interferencia
 en su códogo.
 
 Alojaremos sus funciones, las datos necesarios y sus resultados en un
@@ -23,7 +28,7 @@ el siguiente tag
 #!html
 <script type="text/javascript" src="T/proc.js" />
 ```
-Nos valdremos de la recomendacion de [Recursos Compartidos de Origenes
+Nos valdremos de la recomendación de [Recursos Compartidos de Origenes
 Cruzados (CORS)] [2] para poder brindar el script proc.js.
 
 Nuestro script proc.js se encargara de pedir a nuestro servidor T
