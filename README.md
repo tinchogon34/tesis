@@ -36,5 +36,15 @@ procesos que ejecutaran la funciona Map del Investigador en un Web Worker
 en el cliente de W y nos traeran las resultados para luego realizar
 la funcion Reduce.
 
+
+### Instalación
+
++ Instalar *mongodb* en el OS
+
++ Instalar dependencias:
+
+`npm install express.io underscore mongodb body-parse morgan compression serve-static sleep`
+
+
 [1]: http://www.um.edu.ar/
 [2]: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
