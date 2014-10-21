@@ -7,17 +7,18 @@ assert = require 'assert'
 fs = require 'fs'
 MongoClient = require('mongodb').MongoClient
 ObjectID = require('mongodb').ObjectID
+_ = require("underscore")
 
 app = express()
 trusted_hosts = ['http://localhost:3000']
 db_url = 'mongodb://127.0.0.1:27017/tesis'
-worker_js = fs.readFileSync 'worker.js', 'utf8'
+WORKER_JS = fs.readFileSync 'worker.js', 'utf8'
 db = null
 
+# Connect to DB
 MongoClient.connect db_url, (err, connection) ->
     assert.ifError err
     assert.ok connection
-
     db = connection
 
 allowCrossDomain = (req, res, next) ->
@@ -26,14 +27,13 @@ allowCrossDomain = (req, res, next) ->
     res.header 'Access-Control-Allow-Headers', 'Content-Type'
     next()
 
-### SET MIDDLEWARE ###
-
+# SET MIDDLEWARE
 app.use serveStatic __dirname + '/public'
 app.use morgan 'default'
-app.use bodyParser.urlencoded(({ extended: true }))
+app.use bodyParser.json()
+app.use bodyParser.urlencoded extended: true
 app.use compression()
 app.use allowCrossDomain
-#######################
 
 shuffle = (h) ->
     keys = Object.keys(h)
@@ -63,18 +63,13 @@ get_slices = (data, size) ->
     return shuffle(hash)
 
 get_work_or_data = (callback) ->
-    
     db.collection 'workers', (err, collection) ->
         return callback {task_id: 0} if err
         assert.ok collection
        
         collection.find({"status": {$ne: "reduce_pending"}}).toArray((err, items) ->
-            return callback {task_id: 0} if err
-            assert.ok items
-
-            if !items.length
+            if !items.length or err
                 console.log "Workers empty"
-                
                 return callback {task_id: 0} # No more works
 
             work = items[Math.floor(Math.random()*items.length)] # Random pick one work
@@ -114,77 +109,138 @@ get_work_or_data = (callback) ->
 
         )
 
+getWork = (task_id=null, callback) ->
+  ###
+  Busca en la DB un `task` con _id igual a `slice_id ` o si este es null,
+  lo busca aleatoriamente. Luego llama a la funcion callback con task como 
+  argumento
+  ###
+  console.log "getWork.task_id", task_id
+  coll = db.collection 'workers'
+  if task_id isnt null
+    console.log task_id
+    coll.findOne {_id: new ObjectID task_id}, (err, item) ->
+      if err
+        console.error err
+        return
+      callback item
+    return;
+
+  # Elije uno aleatoriamente.
+  coll.find({"status": {$ne: "reduce_pending"}}).count (err, _n) ->
+    coll.find({"status": {$ne: "reduce_pending"}}).limit(1).skip(
+      _.random(_n - 1)).nextObject(
+        (err, item) ->
+          if err
+            console.error err
+            return
+          callback item
+      )
+
+
+###
+Define HTTP method
+###
 app.get '/work', (req, res) ->
-    # Response only if CORS json request from known hosts
-    if (req.accepts('json') != 'undefined') and req.headers.origin in trusted_hosts
-        return get_work_or_data (work) ->
-            res.json work    
-    res.send ""
+  # Response only if CORS json request from known hosts
+
+  #if (req.accepts 'json' != 'undefined') and req.headers.origin in trusted_hosts
+  #    console.log "Work OK!"
+
+  getWork null, (work) ->
+    res.json 
+      task_id: work._id
+      code: work.imap + ";" + WORKER_JS
+    #console.log "Sap, no acepta JSON"
+    #res.send ""
+
+app.get '/data', (req, res) ->
+  # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
+
+  task_id = req.param "task_id"
+  console.log "GET /data con #{req.body.task_id} #{task_id}"
+  if not task_id
+    res.status 400
+    return res.send "task_id required"
+
+  getWork task_id, (work) ->
+    console.log "work", work
+    _slice_id = _.sample work.available_slices
+    console.log _slice_id
+    return res.json 
+      slice_id: _slice_id 
+      data: work.slices[_slice_id]
 
 app.post '/data', (req, res) ->
-    doc_id = req.body.task_id
-    slice_id = req.body.slice_id
-    result = req.body.result
-    update = {}
-    update["map_results.#{slice_id}"] = result
-    update["slices.#{slice_id}.status"] = "received"
-    ###
-    DO CHECKS # args are required
-    ###
+  # Postea resultados de los datos ya procesador. Devuelve mas datos para
+  # que el cliente siga *laburanding* Haters gonna hate ;).
 
-    ###
-    # TODO: esto tiene que ser un push, en vez de un set
-    # Para almacenar varios resultados de un mismo slice, para luego elijir el
-    # correcto. De esta manera prevenimos datos falsos.
-    ###
+  console.log "Posting to /data\n", req.body
+  console.log "req.param", req.param("task_id"), req.param("slice_id"), req.param("result")
+  if undefined in [req.body.task_id, req.body.slice_id, req.body.result]
+    res.status 400
+    return res.send()
 
-    db.collection 'workers', (err, collection) ->
-        return res.json {task_id: 0} if err
-        assert.ok collection
-        
-        ###
-        Need to wait update status???
-        ###
-        
-        collection.update {_id: new ObjectID(doc_id)}, {$inc: {received_count: 1}, $set: update}, (err, count) ->
-            return res.json {task_id: 0} if err
-            assert.equal 1, count
-        
-        return get_work_or_data (work) ->
-            res.json work
+  slice_id = req.param "slice_id"
+  update = {}
+  update["map_results.#{slice_id}"] = req.param "result"
+  
+  ###
+  TODO: esto tiene que ser un push, en vez de un set
+  Para almacenar varios resultados de un mismo slice, para luego elijir el
+  correcto. De esta manera prevenimos datos falsos.
+  ###
+
+  coll = db.collection 'workers'
+  coll.update {
+    _id: new ObjectID req.param "task_id"}, {
+      $set: update
+    }, (err) ->
+      if err isnt null
+        console.error "Failed to update:", err
+
+  getWork req.param("task_id"), (work) ->
+    console.log "work", work
+    _slice_id = _.sample work.available_slices
+    console.log _slice_id
+    return res.json 
+      slice_id: _slice_id 
+      data: work.slices[_slice_id]
+
 
 app.post '/form', (req, res) ->
-    console.log(req.body)
-    data = JSON.parse req.body.data.replace(/'/g,"\"")
-    map = req.body.map
-    reduce = req.body.reduce
+  # Investigator post a new JOBS to distribute.
+  console.log(req.body)
+  data = JSON.parse req.body.data.replace(/'/g,"\"")
+  map = req.body.map
+  reduce = req.body.reduce
     
-    ###
-    DO CHECKS
-    ###
-    
-    doc =
-        data: data
-        worker_code: "investigador_map = " + map
-        reduce: reduce
-        map_results: {}
-        reduce_results: {}
-        slices: get_slices(data, 3)
-        current_slice: -1
-        status: 'created'
-        received_count: 0
-        send_count: 0
+  # DO CHECKS
+  
+  doc =
+    data: data
+    worker_code: "investigador_map = " + map
+    reduce: reduce
+    map_results: {}
+    reduce_results: {}
+    slices: get_slices(data, 3)
+    current_slice: -1
+    status: 'created'
+    received_count: 0
+    send_count: 0
 
-    db.collection 'workers', (err, collection) ->
-        assert.ifError err
-        collection.insert doc, {w: 1}, (err, result) ->
-            assert.ifError err
-            assert.ok result
-        
-        res.send "Thx for submitting a job"
+  db.collection 'workers', (err, collection) ->
+    assert.ifError err
+    collection.insert doc, {w: 1}, (err, result) ->
+      assert.ifError err
+      assert.ok result
+    
+    res.send "Thx for submitting a job"
         
 app.post '/log', (req, res) ->
-    console.log req.body.message
-    res.send 200
+  # logging from proc.js
+  console.log req.body.message
+  res.send 200
 
+console.log "listening to localhost:3000"
 app.listen '3000'
