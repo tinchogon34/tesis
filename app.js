@@ -186,10 +186,8 @@
     argumento
     */
 
-    console.log("getWork.task_id", task_id);
     coll = db.collection('workers');
     if (task_id !== null) {
-      console.log(task_id);
       coll.findOne({
         _id: new ObjectID(task_id)
       }, function(err, item) {
@@ -237,16 +235,14 @@
   app.get('/data', function(req, res) {
     var task_id;
     task_id = req.param("task_id");
-    console.log("GET /data con " + req.body.task_id + " " + task_id);
+    console.log("GET /data con task_id=" + task_id);
     if (!task_id) {
       res.status(400);
       return res.send("task_id required");
     }
     return getWork(task_id, function(work) {
       var _slice_id;
-      console.log("work", work);
       _slice_id = _.sample(work.available_slices);
-      console.log(_slice_id);
       return res.json({
         slice_id: _slice_id,
         data: work.slices[_slice_id]
@@ -255,27 +251,26 @@
   });
 
   app.post('/data', function(req, res) {
+    /* 
+    ( ͡° ͜ʖ ͡°)
+    Postea resultados de los datos ya procesador. Devuelve mas datos para
+    que el cliente siga *laburanding* Haters gonna hate ;).
+    */
+
     var coll, slice_id, update;
-    console.log("Posting to /data\n", req.body);
-    console.log("req.param", req.param("task_id"), req.param("slice_id"), req.param("result"));
+    console.log("Posting to /data");
     if (void 0 === req.body.task_id || void 0 === req.body.slice_id || void 0 === req.body.result) {
       res.status(400);
-      return res.send();
+      return res.send("get your shit together");
     }
     slice_id = req.param("slice_id");
     update = {};
     update["map_results." + slice_id] = req.param("result");
-    /*
-    TODO: esto tiene que ser un push, en vez de un set
-    Para almacenar varios resultados de un mismo slice, para luego elijir el
-    correcto. De esta manera prevenimos datos falsos.
-    */
-
     coll = db.collection('workers');
     coll.update({
       _id: new ObjectID(req.param("task_id"))
     }, {
-      $set: update
+      $push: update
     }, function(err) {
       if (err !== null) {
         return console.error("Failed to update:", err);
@@ -283,9 +278,7 @@
     });
     return getWork(req.param("task_id"), function(work) {
       var _slice_id;
-      console.log("work", work);
       _slice_id = _.sample(work.available_slices);
-      console.log(_slice_id);
       return res.json({
         slice_id: _slice_id,
         data: work.slices[_slice_id]

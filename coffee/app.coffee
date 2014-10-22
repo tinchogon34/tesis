@@ -115,10 +115,8 @@ getWork = (task_id=null, callback) ->
   lo busca aleatoriamente. Luego llama a la funcion callback con task como 
   argumento
   ###
-  console.log "getWork.task_id", task_id
   coll = db.collection 'workers'
   if task_id isnt null
-    console.log task_id
     coll.findOne {_id: new ObjectID task_id}, (err, item) ->
       if err
         console.error err
@@ -136,7 +134,6 @@ getWork = (task_id=null, callback) ->
             return
           callback item
       )
-
 
 ###
 Define HTTP method
@@ -158,51 +155,43 @@ app.get '/data', (req, res) ->
   # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
 
   task_id = req.param "task_id"
-  console.log "GET /data con #{req.body.task_id} #{task_id}"
+  console.log "GET /data con task_id=#{task_id}"
   if not task_id
     res.status 400
     return res.send "task_id required"
 
   getWork task_id, (work) ->
-    console.log "work", work
     _slice_id = _.sample work.available_slices
-    console.log _slice_id
     return res.json 
       slice_id: _slice_id 
       data: work.slices[_slice_id]
 
 app.post '/data', (req, res) ->
-  # Postea resultados de los datos ya procesador. Devuelve mas datos para
-  # que el cliente siga *laburanding* Haters gonna hate ;).
+  ### 
+  ( ͡° ͜ʖ ͡°)
+  Postea resultados de los datos ya procesador. Devuelve mas datos para
+  que el cliente siga *laburanding* Haters gonna hate ;).
+  ###
 
-  console.log "Posting to /data\n", req.body
-  console.log "req.param", req.param("task_id"), req.param("slice_id"), req.param("result")
+  console.log "Posting to /data"
   if undefined in [req.body.task_id, req.body.slice_id, req.body.result]
     res.status 400
-    return res.send()
+    return res.send "get your shit together"
 
   slice_id = req.param "slice_id"
   update = {}
   update["map_results.#{slice_id}"] = req.param "result"
   
-  ###
-  TODO: esto tiene que ser un push, en vez de un set
-  Para almacenar varios resultados de un mismo slice, para luego elijir el
-  correcto. De esta manera prevenimos datos falsos.
-  ###
-
   coll = db.collection 'workers'
   coll.update {
     _id: new ObjectID req.param "task_id"}, {
-      $set: update
+      $push: update
     }, (err) ->
       if err isnt null
         console.error "Failed to update:", err
 
   getWork req.param("task_id"), (work) ->
-    console.log "work", work
     _slice_id = _.sample work.available_slices
-    console.log _slice_id
     return res.json 
       slice_id: _slice_id 
       data: work.slices[_slice_id]
