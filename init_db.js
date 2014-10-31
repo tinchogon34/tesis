@@ -15,6 +15,9 @@ a = {
     map_results: {
         /* slice_id => Object() */
     },
+    reduce_data: {
+        /* key => [vals] */
+    },
     reduce_results: {
 
     },
@@ -28,8 +31,9 @@ a = {
             3: 3
         }
     ],
-    current_slice: 0,
     status: "created",
+    
+    current_slice: 0,
     received_count: 0,
     send_count: 0
 };
