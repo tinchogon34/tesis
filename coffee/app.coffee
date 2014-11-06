@@ -122,7 +122,7 @@ getWork = (task_id=null, callback) ->
         console.error err
         return
       callback item
-    return;
+    return
 
   # Elije uno aleatoriamente.
   coll.find({"status": {$ne: "reduce_pending"}}).count (err, _n) ->
@@ -145,11 +145,13 @@ app.get '/work', (req, res) ->
   #    console.log "Work OK!"
 
   getWork null, (work) ->
+    if work is null
+      return res.json
+        task_id: 0
+
     res.json 
       task_id: work._id
       code: work.imap + ";" + WORKER_JS
-    #console.log "Sap, no acepta JSON"
-    #res.send ""
 
 app.get '/data', (req, res) ->
   # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
@@ -161,6 +163,10 @@ app.get '/data', (req, res) ->
     return res.send "task_id required"
 
   getWork task_id, (work) ->
+    if work is null
+      res.status 400
+      return res.send "Work not found"
+
     _slice_id = _.sample work.available_slices
     return res.json 
       slice_id: _slice_id 
@@ -195,7 +201,6 @@ app.post '/data', (req, res) ->
     return res.json 
       slice_id: _slice_id 
       data: work.slices[_slice_id]
-
 
 app.post '/form', (req, res) ->
   # Investigator post a new JOBS to distribute.

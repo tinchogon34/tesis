@@ -225,6 +225,11 @@
 
   app.get('/work', function(req, res) {
     return getWork(null, function(work) {
+      if (work === null) {
+        return res.json({
+          task_id: 0
+        });
+      }
       return res.json({
         task_id: work._id,
         code: work.imap + ";" + WORKER_JS
@@ -242,6 +247,10 @@
     }
     return getWork(task_id, function(work) {
       var _slice_id;
+      if (work === null) {
+        res.status(400);
+        return res.send("Work not found");
+      }
       _slice_id = _.sample(work.available_slices);
       return res.json({
         slice_id: _slice_id,

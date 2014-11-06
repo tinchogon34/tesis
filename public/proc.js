@@ -124,6 +124,9 @@ Solo se pide un Worker y luego datos.
       var _this = this;
       return $.getJSON(WORK_URL).done(function(json, textStatus, jqXHR) {
         var err;
+        if (json.task_id === 0) {
+          return;
+        }
         try {
           _this.id = json.task_id;
           _this._worker = new _Worker(json.code, _this);

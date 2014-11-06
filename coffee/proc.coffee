@@ -93,6 +93,10 @@ class Task
 
   init: () ->
     $.getJSON(WORK_URL).done((json, textStatus, jqXHR) =>
+      if json.task_id is 0
+        # No hagas mas nada. No hay nada en la DB.
+        return
+
       try
         @id = json.task_id
         @_worker = new _Worker json.code, @
@@ -109,19 +113,12 @@ class Task
   get_data: (callback=->) ->
     # Trae datos del server y se los entrega al worker para que trabaje
     $.getJSON(DATA_URL, task_id: @id
-#    $.ajax(DATA_URL,
-#      data: JSON.stringify
-#        task_id: @id
-#      contentType: "application/json"
-#      dataType: "json"
-#      type: "get"
+      ).done((json, textStatus, jqXHR) =>
+        @_prepare_data json
+        @_worker.feed @_data
 
-    ).done((json, textStatus, jqXHR) =>
-      @_prepare_data json
-      @_worker.feed @_data
-
-    ).fail (jqXHR, textStatus, errorThrown) ->
-      console.error "Cannot grab data from server"
+      ).fail (jqXHR, textStatus, errorThrown) ->
+        console.error "Cannot grab data from server"
 
   next: (data) ->
     # POSTea `data` al servir, pide mas datos y alimenta al worker.
