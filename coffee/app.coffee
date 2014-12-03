@@ -10,7 +10,7 @@ ObjectID = require('mongodb').ObjectID
 _ = require("underscore")
 
 app = express()
-trusted_hosts = ['http://localhost:3000']
+trusted_hosts = ['*']
 db_url = 'mongodb://127.0.0.1:27017/tesis'
 WORKER_JS = fs.readFileSync 'worker.js', 'utf8'
 db = null
@@ -35,6 +35,7 @@ app.use bodyParser.urlencoded extended: true
 app.use compression()
 app.use allowCrossDomain
 
+# remove?
 shuffle = (h) ->
     keys = Object.keys(h)
     size = keys.length
@@ -45,6 +46,7 @@ shuffle = (h) ->
         [h[randomKeyI], h[randomKeyJ]] = [h[randomKeyJ], h[randomKeyI]] # Do swap
     return h
 
+# remove?
 get_slices = (data, size) ->
     # { "0" : 1, "1" : 1, "2" : 2, "3" : 3 }
     # { "0": {"status": "created", "data": {"0" : 1, "1" : 1, "2" : 2 }}, 1: {"status":"created","data":{"3" : 3}} }
@@ -77,10 +79,11 @@ getWork = (task_id=null, callback) ->
         return
       callback item
     return
-
+  
+  console.log "elijiendo una task aleatoriamente"
   # Elije uno aleatoriamente.
-  coll.find({"status": {$ne: "reduce_pending"}}).count (err, _n) ->
-    coll.find({"status": {$ne: "reduce_pending"}}).limit(1).skip(
+  coll.find({$where: "this.available_slices.length > 1"}).count (err, _n) ->
+    coll.find({$where: "this.available_slices.length > 1"}).limit(1).skip(
       _.random(_n - 1)).nextObject(
         (err, item) ->
           if err
@@ -94,10 +97,6 @@ Define HTTP method
 ###
 app.get '/work', (req, res) ->
   # Response only if CORS json request from known hosts
-
-  #if (req.accepts 'json' != 'undefined') and req.headers.origin in trusted_hosts
-  #    console.log "Work OK!"
-
   getWork null, (work) ->
     if work is null
       return res.json
@@ -158,7 +157,7 @@ app.post '/data', (req, res) ->
       slice_id: _slice_id 
       data: work.slices[_slice_id]
 
-
+# remove?
 app.post '/form', (req, res) ->
   # Investigator post a new JOBS to distribute.
   console.log(req.body)

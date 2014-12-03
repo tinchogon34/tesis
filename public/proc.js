@@ -125,6 +125,7 @@ Solo se pide un Worker y luego datos.
       return $.getJSON(WORK_URL).done(function(json, textStatus, jqXHR) {
         var err;
         if (json.task_id === 0) {
+          console.log("Nada que hacer");
           return;
         }
         try {

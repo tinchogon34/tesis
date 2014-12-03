@@ -94,7 +94,7 @@ class Task
   init: () ->
     $.getJSON(WORK_URL).done((json, textStatus, jqXHR) =>
       if json.task_id is 0
-        # No hagas mas nada. No hay nada en la DB.
+        console.log "Nada que hacer"
         return
 
       try
