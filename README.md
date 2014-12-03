@@ -1,10 +1,10 @@
-# Procesamiento Distribuido 
+# Procesamiento Distribuido
 
 
 Trabajo Final para la carrera Ingeniera en Informatica en la [Universidad de
 Mendoza] [1] de:
 
-+ López, Gabriel Marcos <gabriel.marcos@trustit.solutions>
++ López, Gabriel Marcos <gabriel.lopez@trustit.solutions>
 
 + Gonzalez, Martin Gerónimo <tinchogon34@gmail.com>
 
@@ -43,7 +43,7 @@ la funcion Reduce.
 
 + Instalar dependencias:
 
-`npm install express.io underscore mongodb body-parse morgan compression serve-static sleep`
+`npm install express.io underscore mongodb body-parser morgan compression serve-static sleep`
 
 
 [1]: http://www.um.edu.ar/
