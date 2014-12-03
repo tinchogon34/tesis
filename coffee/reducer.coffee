@@ -88,8 +88,9 @@ process = (task, coll) ->
           updated"
       console.log "INFO: #{status}"
 
-console.log "Conectando a al DB..."
+
 # Start here!
+console.log "Conecting to DB..."
 MongoClient.connect DB_URL, (err, conn) ->
   if err isnt null
     console.log err
@@ -101,6 +102,10 @@ MongoClient.connect DB_URL, (err, conn) ->
     if err isnt null
       console.log "Error: ", err
       return
+    if task is null
+      return
+    
     console.log "Procesando...", task._id
-
     process task, coll
+    console.log "Finishing proccessing task ", task._id
+    conn.close()

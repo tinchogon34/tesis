@@ -62,52 +62,6 @@ get_slices = (data, size) ->
     
     return shuffle(hash)
 
-get_work_or_data = (callback) ->
-    db.collection 'workers', (err, collection) ->
-        return callback {task_id: 0} if err
-        assert.ok collection
-       
-        collection.find({"status": {$ne: "reduce_pending"}}).toArray((err, items) ->
-            if !items.length or err
-                console.log "Workers empty"
-                return callback {task_id: 0} # No more works
-
-            work = items[Math.floor(Math.random()*items.length)] # Random pick one work
-            # NEED TO LOCK IT, no more than one request with same slice
-            size = Object.keys(work.slices).length
-
-            if work.status != 'reduce_pending' and work.received_count == size
-                console.log "Entre al received"
-                collection.update {_id: work._id}, {$set: {status: 'reduce_pending'}}, (err, count) ->
-                    return callback {task_id: 0} if err
-                    assert.equal 1, count
-                    
-                return get_work_or_data callback
-
-            else if work.current_slice == size-1
-                return get_work_or_data callback                    
-
-            collection.findAndModify {_id: work._id}, [], {$inc: {current_slice: 1}}, {new: true}, (err, work) ->
-                return callback {task_id: 0} if err
-                assert.ok work
-                
-                ### {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]] ###
-                ### PROC.JS COMPATIBILITY, REMOVE THIS! ###
-                arr = []
-                for key, value of work.slices[work.current_slice].data
-                    arr.push [key, value]
-                #############################################################
-
-                doc =
-                    task_id: work._id
-                    slice_id: work.current_slice
-                    data: arr
-                    worker: work.worker_code + ";" + worker_js
-
-                            
-                return callback doc
-
-        )
 
 getWork = (task_id=null, callback) ->
   ###
@@ -153,6 +107,7 @@ app.get '/work', (req, res) ->
       task_id: work._id
       code: work.imap + ";" + WORKER_JS
 
+
 app.get '/data', (req, res) ->
   # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
 
@@ -171,6 +126,7 @@ app.get '/data', (req, res) ->
     return res.json 
       slice_id: _slice_id 
       data: work.slices[_slice_id]
+
 
 app.post '/data', (req, res) ->
   ### 
@@ -201,6 +157,7 @@ app.post '/data', (req, res) ->
     return res.json 
       slice_id: _slice_id 
       data: work.slices[_slice_id]
+
 
 app.post '/form', (req, res) ->
   # Investigator post a new JOBS to distribute.

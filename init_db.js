@@ -4,6 +4,7 @@
  */
 // sample object
 a = {
+    // Datos originales provistos por el investigador.
     data: {
         0: 1,
         1: 1,
@@ -12,16 +13,24 @@ a = {
     },
     imap: "investigador_map = function (k, v) {\r\n  log(\"inv in\");\r\n  var ms = 1000;\r\n  var started = new Date().getTime();\r\n  while((new Date().getTime() - started) < ms) {\r\n  }\r\n  emit(\"llave\", v*v);\r\n  log(\"inv in out\");\r\n};      ",
     reduce: "function (k, vals) {\r\n  var total = vals.reduce(function(a, b) {\r\n    return parseInt(a) + parseInt(b);\r\n  });\r\n  return total;\r\n};      ",
+
+    // Resultados de map
     map_results: {
         /* slice_id => Object() */
     },
+
+    // Resultados de Map procesados para ser utilizados por el reduce
     reduce_data: {
         /* key => [vals] */
     },
+    
+    // Resultados del reduce. Resultado final?
     reduce_results: {
 
     },
-    available_slices: [0, 1],  // slices cuyos map_results no han sido reducidos
+
+    // slices cuyos map_results no han sido reducidos
+    available_slices: [0, 1],
     slices: [
         {
             0: 1,
@@ -30,12 +39,7 @@ a = {
         }, {
             3: 3
         }
-    ],
-    status: "created",
-    
-    current_slice: 0,
-    received_count: 0,
-    send_count: 0
+    ]
 };
 
 // imports
