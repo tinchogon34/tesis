@@ -17,7 +17,7 @@ investigador_reduce = function (k, vals) {
   });
   return total;
 };
-###
+
 investigador_map = (k, v) -> 
   log "imap con #{k}, #{v}"
   ms = 1000
@@ -27,7 +27,7 @@ investigador_map = (k, v) ->
   
   emit "llave", v * v
   log "inv in out"
-
+####
 # Aqui guarda los resultados la funcion `map`
 # Deben tener una estructura de Array[Array[2], Array[2], ...]
 result = []
@@ -124,6 +124,7 @@ class Cola
     clearTimeout @_tout
     @sleeping = true
 
+# TODO: mirotear si estamos con map o reduce
 cola = new Cola(investigador_map)
 @onmessage = (evnt) ->
   # Comunicación del `proc` a este worker.

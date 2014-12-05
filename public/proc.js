@@ -114,6 +114,7 @@ Solo se pide un Worker y luego datos.
   Task = (function() {
     function Task() {
       this.id = null;
+      this.reducing = null;
       this._worker = null;
       this._slice = null;
       this._data = null;
@@ -129,7 +130,9 @@ Solo se pide un Worker y luego datos.
           return;
         }
         try {
+          console.log("init Task", json.task_id, json.reducing);
           _this.id = json.task_id;
+          _this.reducing = json.reducing;
           _this._worker = new _Worker(json.code, _this);
           return _this.get_data();
         } catch (_error) {
@@ -149,8 +152,10 @@ Solo se pide un Worker y luego datos.
         callback = function() {};
       }
       return $.getJSON(DATA_URL, {
-        task_id: this.id
+        task_id: this.id,
+        reducing: this.reducing
       }).done(function(json, textStatus, jqXHR) {
+        console.log("GET /data trajo", json);
         _this._prepare_data(json);
         return _this._worker.feed(_this._data);
       }).fail(function(jqXHR, textStatus, errorThrown) {

@@ -18,22 +18,22 @@ investigador_reduce = function (k, vals) {
   });
   return total;
 };
+
+investigador_map = (k, v) -> 
+  log "imap con #{k}, #{v}"
+  ms = 1000
+  started = new Date().getTime()
+  while((new Date().getTime() - started) < ms)
+    ;
+  
+  emit "llave", v * v
+  log "inv in out"
 */
 
 
 (function() {
-  var Cola, cola, emit, error, investigador_map, log, result,
+  var Cola, cola, emit, error, log, result,
     __slice = [].slice;
-
-  investigador_map = function(k, v) {
-    var ms, started;
-    log("imap con " + k + ", " + v);
-    ms = 1000;
-    started = new Date().getTime();
-    while ((new Date().getTime() - started) < ms) {}
-    emit("llave", v * v);
-    return log("inv in out");
-  };
 
   result = [];
 

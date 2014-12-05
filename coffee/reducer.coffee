@@ -108,4 +108,3 @@ MongoClient.connect DB_URL, (err, conn) ->
     console.log "Procesando...", task._id
     process task, coll
     console.log "Finishing proccessing task ", task._id
-    conn.close()

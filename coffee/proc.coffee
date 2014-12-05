@@ -86,6 +86,7 @@ class Task
 
   constructor: () ->
     @id = null
+    @reducing = null
     @_worker = null
     @_slice = null # current slice_id
     @_data = null # data related with slice
@@ -98,7 +99,9 @@ class Task
         return
 
       try
+        console.log "init Task", json.task_id, json.reducing
         @id = json.task_id
+        @reducing = json.reducing
         @_worker = new _Worker json.code, @
         @get_data()
 
@@ -112,8 +115,11 @@ class Task
 
   get_data: (callback=->) ->
     # Trae datos del server y se los entrega al worker para que trabaje
-    $.getJSON(DATA_URL, task_id: @id
-      ).done((json, textStatus, jqXHR) =>
+    $.getJSON(DATA_URL, {
+        task_id: @id
+        reducing: @reducing
+      }).done((json, textStatus, jqXHR) =>
+        console.log "GET /data trajo", json
         @_prepare_data json
         @_worker.feed @_data
 

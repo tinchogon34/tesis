@@ -82,49 +82,85 @@ getWork = (task_id=null, callback) ->
   
   console.log "elijiendo una task aleatoriamente"
   # Elije uno aleatoriamente.
-  coll.find({$where: "this.available_slices.length > 1"}).count (err, _n) ->
-    coll.find({$where: "this.available_slices.length > 1"}).limit(1).skip(
-      _.random(_n - 1)).nextObject(
-        (err, item) ->
+  # Si hay un Task para reducir se elige primero ese
+  coll.find({$where: "this.available_slices.length == 0"}).count (err, _n) ->
+    console.log "hay para reducir #{_n}"
+    if _n isnt 0
+      coll.find({$where: "this.available_slices.length == 0"}).limit(1).skip(
+        _.random(_n - 1)).nextObject((err, item) ->
           if err
             console.error err
             return
-          callback item
-      )
+          callback item, true
+        )
+
+    else
+      coll.find({$where: "this.available_slices.length > 1"}).count (err, _n) ->
+        coll.find({$where: "this.available_slices.length > 1"}).limit(1).skip(
+          _.random(_n - 1)).nextObject((err, item) ->
+            if err
+              console.error err
+              return
+            callback item, false
+          )
+
+
+sendData = (work, reducing, res) ->
+  if work is null
+    res.status 400
+    return res.send "Work not found"
+
+  if reducing
+    # TODO: enviar tados de reducing
+    _data = _.sample(_.pairs(work.reduce_data))
+    data = {}
+    data[_data[0]] = _data[1]
+
+    console.log _data
+    console.log data
+    return res.json 
+      data: data
+
+  else
+    _slice_id = _.sample work.available_slices
+    return res.json 
+      slice_id: _slice_id 
+      data: work.slices[_slice_id]
 
 ###
 Define HTTP method
 ###
 app.get '/work', (req, res) ->
-  # Response only if CORS json request from known hosts
-  getWork null, (work) ->
+  getWork null, (work, reducing) ->
     if work is null
       return res.json
         task_id: 0
 
-    res.json 
-      task_id: work._id
-      code: work.imap + ";" + WORKER_JS
+    if reducing
+      res.json 
+        task_id: work._id
+        reducing: reducing
+        code: work.ireduce + ";" + WORKER_JS
+    
+    else
+      res.json 
+        task_id: work._id
+        reducing: reducing
+        code: work.imap + ";" + WORKER_JS
 
 
 app.get '/data', (req, res) ->
   # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
 
   task_id = req.param "task_id"
-  console.log "GET /data con task_id=#{task_id}"
+  reducing = req.param "reducing"
+  console.log "GET /data con #{reducing} task_id=#{task_id}"
   if not task_id
     res.status 400
     return res.send "task_id required"
 
   getWork task_id, (work) ->
-    if work is null
-      res.status 400
-      return res.send "Work not found"
-
-    _slice_id = _.sample work.available_slices
-    return res.json 
-      slice_id: _slice_id 
-      data: work.slices[_slice_id]
+    sendData(work, reducing, res)
 
 
 app.post '/data', (req, res) ->
@@ -135,7 +171,7 @@ app.post '/data', (req, res) ->
   ###
 
   console.log "Posting to /data"
-  if undefined in [req.body.task_id, req.body.slice_id, req.body.result]
+  if undefined in [req.body.task_id, req.body.slice_id, req.body.result, req.body.reducing]
     res.status 400
     return res.send "get your shit together"
 
@@ -151,11 +187,10 @@ app.post '/data', (req, res) ->
       if err isnt null
         console.error "Failed to update:", err
 
+  # Todo
   getWork req.param("task_id"), (work) ->
-    _slice_id = _.sample work.available_slices
-    return res.json 
-      slice_id: _slice_id 
-      data: work.slices[_slice_id]
+    sendData(work, req.body.reducing, res)
+
 
 # remove?
 app.post '/form', (req, res) ->
