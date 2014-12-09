@@ -51,7 +51,6 @@ class _Worker
       msg = evnt.data
       switch msg.type
         when "send_result"
-          log "send_result recv"
           _recv = JSON.parse(msg.args)
           console.log "Recibi un send_result con", _recv, JSON.parse(msg.args)
           @_task.next _recv
@@ -115,6 +114,7 @@ class Task
 
   get_data: (callback=->) ->
     # Trae datos del server y se los entrega al worker para que trabaje
+    console.log "reducing type", typeof @reducing
     $.getJSON(DATA_URL, {
         task_id: @id
         reducing: @reducing
@@ -162,6 +162,7 @@ class Task
         task_id: @id
         slice_id: @_slice
         result: @_result
+        reducing: @reducing
       contentType: "application/json"
       dataType: "json"
       type: "post"
@@ -186,7 +187,7 @@ log_to_server = (msg) ->
       message: msg
       task_id: task_id
 
-
+# remove?
 process_response = (json) ->
   try
     if json.task_id is 0
@@ -209,10 +210,6 @@ process_response = (json) ->
   
   catch err
     throw new Error "FATAL: #{err.message}"
-
-log = (line) ->
-  # Simple logging function in the body
-  $(document.body).append "#{new Date().getTime()} #{line} <br />"
 
 toggle_pause = ->
   clearInterval intervalId

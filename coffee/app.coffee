@@ -81,8 +81,10 @@ getWork = (task_id=null, callback) ->
     return
   
   console.log "elijiendo una task aleatoriamente"
-  # Elije uno aleatoriamente.
-  # Si hay un Task para reducir se elige primero ese
+  ###
+  Elije uno aleatoriamente.
+  Si hay un Task listo para reducir tiene mayor prioridad.
+  ###
   coll.find({$where: "this.available_slices.length == 0"}).count (err, _n) ->
     console.log "hay para reducir #{_n}"
     if _n isnt 0
@@ -106,6 +108,7 @@ getWork = (task_id=null, callback) ->
 
 
 sendData = (work, reducing, res) ->
+  #console.log work, reducing, res
   if work is null
     res.status 400
     return res.send "Work not found"
@@ -140,26 +143,28 @@ app.get '/work', (req, res) ->
       res.json 
         task_id: work._id
         reducing: reducing
-        code: work.ireduce + ";" + WORKER_JS
+        code: WORKER_JS + work.ireduce
     
     else
       res.json 
         task_id: work._id
         reducing: reducing
-        code: work.imap + ";" + WORKER_JS
+        code: work.imap + WORKER_JS
 
 
 app.get '/data', (req, res) ->
   # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
 
   task_id = req.param "task_id"
-  reducing = req.param "reducing"
+  reducing = req.param("reducing") is "true"
   console.log "GET /data con #{reducing} task_id=#{task_id}"
+
   if not task_id
     res.status 400
     return res.send "task_id required"
 
   getWork task_id, (work) ->
+    console.log "work fetched! #{reducing}"
     sendData(work, reducing, res)
 
 
@@ -171,10 +176,14 @@ app.post '/data', (req, res) ->
   ###
 
   console.log "Posting to /data"
-  if undefined in [req.body.task_id, req.body.slice_id, req.body.result, req.body.reducing]
-    res.status 400
-    return res.send "get your shit together"
+  if undefined in [req.body.task_id, req.body.result, req.body.reducing]
+    return res.status(400).send "Missing argument(s)"
+  reducing = req.body.reducing is "true"
 
+  if not reducing
+    if req.body.slice_id is undefined
+      return res.status(400).send "Missing argument(s)"
+  
   slice_id = req.param "slice_id"
   update = {}
   update["map_results.#{slice_id}"] = req.param "result"

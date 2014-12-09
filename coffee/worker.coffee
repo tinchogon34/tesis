@@ -28,20 +28,21 @@ investigador_map = (k, v) ->
   emit "llave", v * v
   log "inv in out"
 ####
+
 # Aqui guarda los resultados la funcion `map`
 # Deben tener una estructura de Array[Array[2], Array[2], ...]
 result = []
 
 # General Porpouse functions
-log = (msg, others...) ->
+self.log = (msg, others...) ->
   console.log "[Worker] #{msg}", others...
 
-error = (msg) ->
+self.error = (msg) ->
   console.error "[Worker] #{msg}"
 
-emit = (key, val) ->
+self.emit = (key, val) ->
   # Es usada en el map para insertar un resultado.
-  log "emit con #{key} #{val}"
+  self.log "emit con #{key} #{val}"
   result.push [key, val]
 
 
@@ -66,22 +67,22 @@ class Cola
     ###
     if @executing or @sleeping
       return
-    log "@_process #{@executing} #{@sleeping}"
+    self.log "@_process #{@executing} #{@sleeping}"
     
     @executing = true
     if @i < @_keys.length
-      log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
+      self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
       @map @_keys[@i], @_data[@_keys[@i]]
       @i++
     
     else  # termino de procesar.
-      log "termino de procesar"
+      self.log "termino de procesar"
       @_sendResult() 
 
     # Hay una ventana de tiempo entre cada llamada map.
     if not @sleeping
       @_tout = setTimeout(=>
-        log "desde el timeout"
+        self.log "desde el timeout"
         @_process()
       , 50)
     @executing = false
@@ -99,7 +100,7 @@ class Cola
     result.forEach (item) ->
       _result.push item.slice()
 
-    log "_sendResult", result
+    self.log "_sendResult", result
     
     postMessage
       type: "send_result"
@@ -113,19 +114,19 @@ class Cola
     @_keys = Object.keys data
 
   wake: () ->
-    log "wake"
+    self.log "wake"
     if not @sleeping
       return
     @sleeping = false
     @_process()
 
   sleep: () ->
-    log "sleep"
+    self.log "sleep"
     clearTimeout @_tout
     @sleeping = true
 
 # TODO: mirotear si estamos con map o reduce
-cola = new Cola(investigador_map)
+cola = new Cola(self.investigador_map)
 @onmessage = (evnt) ->
   # Comunicación del `proc` a este worker.
   
@@ -134,19 +135,19 @@ cola = new Cola(investigador_map)
     when "start"
       # En args tiene los datos. Es arr de arr [["0", 1], ...]
       if not msg.args
-        error "Datos invalidos:", msg.args
+        self.error "Datos invalidos:", msg.args
         return
 
-      log "start", msg.args
+      self.log "start", msg.args
       cola.setData msg.args
       cola.wake()
     
     when "pause"
-      log "pause recv"
+      self.log "pause recv"
       cola.sleep()
 
     when "resume"
-      log "resumign recv"
+      self.log "resumign recv"
       cola.wake()      
 
 @postMessage
