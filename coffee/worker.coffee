@@ -1,32 +1,12 @@
 ###
-* funciones utilizada en investigador_map para agregar valores 
+  Contiene el código a ser ejecutado en el Web Worker. No es servido como un
+  archivo estático porque se le debe agregar las funciones map o reduce del
+  investigador.
 
-investigador_map = function (k, v) {
-  log("inv in");
-  var ms = 1000;
-  var started = new Date().getTime();
-  while((new Date().getTime() - started) < ms) {
-  }
-  emit("llave", v*v);
-  log("inv in out");
-};
+  Realiza las llamadas a `map` o `reduce` teniendo en cuenta de no hacer un 
+  uso *intensivo* de los recursos del cliente.
 
-investigador_reduce = function (k, vals) {
-  var total = vals.reduce(function(a, b) {
-    return parseInt(a) + parseInt(b);
-  });
-  return total;
-};
-
-investigador_map = (k, v) -> 
-  log "imap con #{k}, #{v}"
-  ms = 1000
-  started = new Date().getTime()
-  while((new Date().getTime() - started) < ms)
-    ;
-  
-  emit "llave", v * v
-  log "inv in out"
+  Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
 ####
 
 # Aqui guarda los resultados la funcion `map`
@@ -48,17 +28,25 @@ self.emit = (key, val) ->
 
 class Cola
   ###
-  Se encarga de realizar las llamadas a `map` cuidando de no utilizar
-  el máximo de los recursos del cliente.
+  Realizar las llamadas a `map` o `reduce`. Se duerme `this.sleeping` ms y 
+  continua trabajando.
   ###   
   
-  constructor: (@map) ->
+  constructor: () ->
     @i = 0
     @_data = null
     @_keys = null
     @executing = false
     @sleeping = true
     @_tout = null
+    if self.investigador_map isnt undefined
+      @fn = self.investigador_map
+      log "El Web Worker será utilizado para *map*"
+    else if self.investigador_reduce isnt undefined
+      @fn = self.investigador_reduce
+      log "El Web Worker será utilizado para *reduce*"
+    else
+      error "No se encontro la funcion *map* ni *reduce*"
 
   _process: () ->
     ###
@@ -72,7 +60,7 @@ class Cola
     @executing = true
     if @i < @_keys.length
       self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
-      @map @_keys[@i], @_data[@_keys[@i]]
+      @fn @_keys[@i], @_data[@_keys[@i]]
       @i++
     
     else  # termino de procesar.
@@ -125,10 +113,9 @@ class Cola
     clearTimeout @_tout
     @sleeping = true
 
-# TODO: mirotear si estamos con map o reduce
-cola = new Cola(self.investigador_map)
+cola = new Cola()
 @onmessage = (evnt) ->
-  # Comunicación del `proc` a este worker.
+  # Comunicación con `proc.js`.
   
   msg = evnt.data
   switch msg.type
@@ -150,5 +137,6 @@ cola = new Cola(self.investigador_map)
       self.log "resumign recv"
       cola.wake()      
 
+# Avisar que esta listo para ejecutar las tareas.
 @postMessage
   type: "ready"

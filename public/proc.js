@@ -64,6 +64,10 @@ Solo se pide un Worker y luego datos.
   _Worker = (function() {
 
     function _Worker(code, task) {
+      /*
+           Construye el worker y lo prepara para que empieze a ejecutarlo.
+      */
+
       var _this = this;
       this._ready = false;
       this._pause_id = null;
@@ -83,10 +87,10 @@ Solo se pide un Worker y luego datos.
             console.log("Recibi ready");
             return _this._ready = true;
           default:
-            return log("Unhandled msg " + msg);
+            return console.log("Unhandled msg " + msg);
         }
       };
-      console.log("worker construido");
+      console.log("Web worker construido.");
     }
 
     _Worker.prototype.feed = function(data) {
@@ -278,19 +282,19 @@ Solo se pide un Worker y luego datos.
       type: "pause",
       sleep_time: sleep_time
     });
-    log("pause" + " send");
+    console.log("pause" + " send");
     intervalId = setInterval(toggle_pause, tiempo_de_ejecucion);
   };
 
   wait_for_new_tasks = function() {
     get_work_running = true;
-    log("<a style='color:red'>Esperando nuevos trabajos...</a>");
+    console.log("<a style='color:red'>Esperando nuevos trabajos...</a>");
     get_work_interval = setInterval("get_work()", 5000);
   };
 
   t = new Task();
 
-  log("comienza proc.js");
+  console.log("comienza proc.js");
 
   t.init();
 

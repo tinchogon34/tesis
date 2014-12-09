@@ -9,6 +9,7 @@ servidor de Tareas.
 Solo se pide un Worker y luego datos.
 ###
 
+# TODO: Varios de estas definiciones no sirven. Borrarlas.
 sleep_time = undefined
 slice_id = undefined
 start_worker = undefined
@@ -39,7 +40,9 @@ class _Worker
   # Encapsula los detalles del Worker.
   
   constructor: (code, task) ->
-    # Construye el worker y lo prepara para que empieze a ejecutarlo.
+    ###
+     Construye el worker y lo prepara para que empieze a ejecutarlo.
+    ###
 
     @_ready = false
     @_pause_id = null
@@ -60,8 +63,8 @@ class _Worker
           @_ready = true
         
         else
-          log "Unhandled msg #{msg}"
-    console.log "worker construido"
+          console.log "Unhandled msg #{msg}"
+    console.log "Web worker construido."
 
   feed: (data) ->
     if not @_ready
@@ -217,18 +220,18 @@ toggle_pause = ->
     type: "pause"
     sleep_time: sleep_time
 
-  log "pause" + " send"
+  console.log "pause" + " send"
   intervalId = setInterval(toggle_pause, tiempo_de_ejecucion)
   return
 
 wait_for_new_tasks = ->
   get_work_running = true
-  log "<a style='color:red'>Esperando nuevos trabajos...</a>"
+  console.log "<a style='color:red'>Esperando nuevos trabajos...</a>"
   get_work_interval = setInterval("get_work()", 5000)
   return
 
 
 # Start working!
 t = new Task()
-log "comienza proc.js"
+console.log "comienza proc.js"
 t.init()
