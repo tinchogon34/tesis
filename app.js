@@ -197,7 +197,7 @@
         return res.json({
           task_id: work._id,
           reducing: reducing,
-          code: WORKER_JS + work.ireduce
+          code: work.ireduce + WORKER_JS
         });
       } else {
         return res.json({
@@ -288,11 +288,6 @@
       });
       return res.send("Thx for submitting a job");
     });
-  });
-
-  app.post('/log', function(req, res) {
-    console.log(req.body.message);
-    return res.send(200);
   });
 
   console.log("listening to localhost:3000");

@@ -135,18 +135,18 @@ Solo se pide un Worker y luego datos.
           return;
         }
         try {
-          console.log("init Task", json.task_id, json.reducing);
+          console.log("init Task for " + (json.reducing ? "Reducing" : "mapping"));
           _this.id = json.task_id;
           _this.reducing = json.reducing;
           _this._worker = new _Worker(json.code, _this);
           return _this.get_data();
         } catch (err) {
-          console.error("Failed to create Worker");
-          return console.error(err.message);
+          console.error(err.message);
+          throw new Error("Failed to create Worker");
         }
       }).fail(function(jqXHR, textStatus, errorThrown) {
-        console.error("Cannot grab Task");
-        return console.error(jqXHR);
+        console.error(jqXHR);
+        throw new Error("Cannot grab Task");
       });
     };
 
@@ -155,7 +155,6 @@ Solo se pide un Worker y luego datos.
       if (callback == null) {
         callback = function() {};
       }
-      console.log("reducing type", typeof this.reducing);
       return $.getJSON(DATA_URL, {
         task_id: this.id,
         reducing: this.reducing
@@ -175,9 +174,11 @@ Solo se pide un Worker y luego datos.
     };
 
     Task.prototype._prepare_data = function(json) {
-      this._slice = json.slice_id;
+      if (!this.reducing) {
+        this._slice = json.slice_id;
+      }
       this._data = json.data;
-      return this.test();
+      return console.log(this.id, this._slice, this._data);
     };
 
     Task.prototype._prepare_result = function(result) {
@@ -225,10 +226,6 @@ Solo se pide un Worker y luego datos.
         console.error("Cannot POST result to server " + textStatus);
         return console.error(jqXHR);
       });
-    };
-
-    Task.prototype.test = function() {
-      return console.log(this.id, this._slice, this._data);
     };
 
     return Task;

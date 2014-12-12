@@ -29,6 +29,12 @@
   };
 
   self.emit = function(key, val) {
+    if (typeof key !== "string") {
+      throw new Error("Key debe ser un String pero es " + (typeof key));
+    }
+    if (val === void 0) {
+      throw new Error("val no debe ser undefined");
+    }
     self.log("emit con " + key + " " + val);
     return result.push([key, val]);
   };
@@ -40,20 +46,23 @@
     */
 
     function Cola() {
+      self.log("Creando Cola");
       this.i = 0;
       this._data = null;
       this._keys = null;
       this.executing = false;
       this.sleeping = true;
       this._tout = null;
+      this.reducing = false;
       if (self.investigador_map !== void 0) {
         this.fn = self.investigador_map;
         log("El Web Worker será utilizado para *map*");
       } else if (self.investigador_reduce !== void 0) {
         this.fn = self.investigador_reduce;
+        this.reducing = true;
         log("El Web Worker será utilizado para *reduce*");
       } else {
-        error("No se encontro la funcion *map* ni *reduce*");
+        throw new Error("No se encontro la funcion *map* ni *reduce*");
       }
     }
 
@@ -64,10 +73,10 @@
       */
 
       var _this = this;
+      self.log("@_process " + this.executing + " " + this.sleeping);
       if (this.executing || this.sleeping) {
         return;
       }
-      self.log("@_process " + this.executing + " " + this.sleeping);
       this.executing = true;
       if (this.i < this._keys.length) {
         self.log("ejecutando map con " + this._keys[this.i] + " y " + this._data[this._keys[this.i]]);
@@ -86,21 +95,15 @@
       return this.executing = false;
     };
 
-    Cola.prototype._initData = function() {
-      log("init data");
-      this._keys = null;
-      this._data = null;
-      return this.i = 0;
-    };
-
     Cola.prototype._sendResult = function() {
       var _result;
+      self.log("_sendResult");
       this.sleep();
       _result = [];
       result.forEach(function(item) {
         return _result.push(item.slice());
       });
-      self.log("_sendResult", result);
+      self.log("_sendResult con ", result);
       return postMessage({
         type: "send_result",
         args: JSON.stringify(result)
@@ -108,6 +111,7 @@
     };
 
     Cola.prototype.setData = function(data) {
+      self.log("setData");
       result = [];
       this.i = 0;
       this._data = data;

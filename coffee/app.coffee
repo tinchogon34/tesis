@@ -114,7 +114,6 @@ sendData = (work, reducing, res) ->
     return res.send "Work not found"
 
   if reducing
-    # TODO: enviar tados de reducing
     _data = _.sample(_.pairs(work.reduce_data))
     data = {}
     data[_data[0]] = _data[1]
@@ -143,7 +142,7 @@ app.get '/work', (req, res) ->
       res.json 
         task_id: work._id
         reducing: reducing
-        code: WORKER_JS + work.ireduce
+        code: work.ireduce + WORKER_JS
     
     else
       res.json 
@@ -153,52 +152,56 @@ app.get '/work', (req, res) ->
 
 
 app.get '/data', (req, res) ->
-  # Devuelve en JSON datos (slice_id, data) para ser procesados en el cliente.
+  ###
+   Devuelve en JSON datos para ser procesados en el cliente.
+  ###
+
+  if undefined in [req.param "reducing", req.param "task_id"] 
+    return res.status(400).send "Missing argument(s)"
 
   task_id = req.param "task_id"
   reducing = req.param("reducing") is "true"
   console.log "GET /data con #{reducing} task_id=#{task_id}"
 
-  if not task_id
-    res.status 400
-    return res.send "task_id required"
-
   getWork task_id, (work) ->
-    console.log "work fetched! #{reducing}"
+    console.log "work fetched! reducing? #{reducing}"
     sendData(work, reducing, res)
 
 
 app.post '/data', (req, res) ->
   ### 
-  ( ͡° ͜ʖ ͡°)
-  Postea resultados de los datos ya procesador. Devuelve mas datos para
-  que el cliente siga *laburanding* Haters gonna hate ;).
+  Almacena los resultados de los datos ya procesador. Devuelve mas datos para
+  que el cliente siga con la siguiente tarea.
   ###
 
   console.log "Posting to /data"
   if undefined in [req.body.task_id, req.body.result, req.body.reducing]
     return res.status(400).send "Missing argument(s)"
+  
   reducing = req.body.reducing is "true"
+  task_id = req.param "task_id"
 
-  if not reducing
+  if reducing
+    # TODO: do some magic shit
+    
+  else
     if req.body.slice_id is undefined
       return res.status(400).send "Missing argument(s)"
   
-  slice_id = req.param "slice_id"
-  update = {}
-  update["map_results.#{slice_id}"] = req.param "result"
-  
-  coll = db.collection 'workers'
-  coll.update {
-    _id: new ObjectID req.param "task_id"}, {
-      $push: update
-    }, (err) ->
-      if err isnt null
-        console.error "Failed to update:", err
+    slice_id = req.param "slice_id"
+    update = {}
+    update["map_results.#{slice_id}"] = req.param "result"
+    
+    coll = db.collection 'workers'
+    coll.update {
+      _id: new ObjectID(task_id)}, {
+        $push: update
+      }, (err) ->
+        if err isnt null
+          console.error "Failed to update:", err
 
-  # Todo
-  getWork req.param("task_id"), (work) ->
-    sendData(work, req.body.reducing, res)
+    getWork task_id, (work) ->
+      sendData(work, req.body.reducing, res)
 
 
 # remove?
@@ -231,10 +234,5 @@ app.post '/form', (req, res) ->
     
     res.send "Thx for submitting a job"
         
-app.post '/log', (req, res) ->
-  # logging from proc.js
-  console.log req.body.message
-  res.send 200
-
 console.log "listening to localhost:3000"
 app.listen '3000'

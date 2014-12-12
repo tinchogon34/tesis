@@ -54,8 +54,9 @@ class _Worker
       msg = evnt.data
       switch msg.type
         when "send_result"
+          console.log  msg.args
           _recv = JSON.parse(msg.args)
-          console.log "Recibi un send_result con", _recv, JSON.parse(msg.args)
+          console.log "Recibi un send_result con", _recv
           @_task.next _recv
 
         when "ready"
@@ -68,11 +69,9 @@ class _Worker
 
   feed: (data) ->
     if not @_ready
-      console.log "Worker is not ready."
-      # throw new Error "Worker is not ready."
       setTimeout(() =>
         @feed(data)
-      , 50)
+      , 100)
       return
 
     @worker.postMessage
@@ -101,23 +100,22 @@ class Task
         return
 
       try
-        console.log "init Task", json.task_id, json.reducing
+        console.log "init Task for " + if json.reducing then "Reducing" else "mapping"
         @id = json.task_id
         @reducing = json.reducing
         @_worker = new _Worker json.code, @
         @get_data()
 
       catch err
-        console.error "Failed to create Worker"
         console.error err.message
+        throw new Error "Failed to create Worker"
 
     ).fail (jqXHR, textStatus, errorThrown) ->
-      console.error "Cannot grab Task"
       console.error jqXHR
+      throw new Error "Cannot grab Task"
 
   get_data: (callback=->) ->
     # Trae datos del server y se los entrega al worker para que trabaje
-    console.log "reducing type", typeof @reducing
     $.getJSON(DATA_URL, {
         task_id: @id
         reducing: @reducing
@@ -136,9 +134,10 @@ class Task
     @_send_result()
 
   _prepare_data: (json) ->
-    @_slice = json.slice_id
+    @_slice = json.slice_id if not @reducing
     @_data = json.data
-    @test()
+    # TODO: delete next line
+    console.log "_prepare_data", @id, @_slice, @_data
 
   _prepare_result: (result) ->
     ###
@@ -178,17 +177,6 @@ class Task
       console.error "Cannot POST result to server #{textStatus}"
       console.error jqXHR
 
-  test: () ->
-    console.log @id, @_slice, @_data
-
-log_to_server = (msg) ->
-  # Es una POST AJAX que envia un msj al servidor.
-  $.ajax LOG_URL,
-    dataType: "json"
-    type: "POST"
-    data:
-      message: msg
-      task_id: task_id
 
 # remove?
 process_response = (json) ->

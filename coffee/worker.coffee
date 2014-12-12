@@ -22,6 +22,10 @@ self.error = (msg) ->
 
 self.emit = (key, val) ->
   # Es usada en el map para insertar un resultado.
+  if typeof key isnt "string"
+    throw new Error("Key debe ser un String pero es #{typeof key}")
+  if val is undefined
+    throw new Error("val no debe ser undefined")
   self.log "emit con #{key} #{val}"
   result.push [key, val]
 
@@ -33,29 +37,33 @@ class Cola
   ###   
   
   constructor: () ->
+    self.log "Creando Cola"
     @i = 0
     @_data = null
     @_keys = null
-    @executing = false
+    @executing = false # TODO: se usa?
     @sleeping = true
     @_tout = null
+    @reducing = false
+
     if self.investigador_map isnt undefined
       @fn = self.investigador_map
       log "El Web Worker será utilizado para *map*"
     else if self.investigador_reduce isnt undefined
       @fn = self.investigador_reduce
+      @reducing = true
       log "El Web Worker será utilizado para *reduce*"
     else
-      error "No se encontro la funcion *map* ni *reduce*"
+      throw new Error("No se encontro la funcion *map* ni *reduce*")
 
   _process: () ->
     ###
     Procesa un elemento de @_data y se espera una ventana de tiempo para
     seguir ejecutando la siguiente
     ###
+    self.log "@_process #{@executing} #{@sleeping}"
     if @executing or @sleeping
       return
-    self.log "@_process #{@executing} #{@sleeping}"
     
     @executing = true
     if @i < @_keys.length
@@ -75,27 +83,24 @@ class Cola
       , 50)
     @executing = false
 
-  _initData: () ->
-    log "init data"
-    @_keys = null
-    @_data = null
-    @i = 0
-
   _sendResult: () ->
+    self.log "_sendResult"
     @sleep()
+    # TODO: Aparente esta de mas, borrarlo
+    ###
     # create a copy
     _result = []
     result.forEach (item) ->
       _result.push item.slice()
-
-    self.log "_sendResult", result
+    ###
+    self.log "_sendResult con ", result
     
     postMessage
       type: "send_result"
       args: JSON.stringify result
-    #@_initData()      
     
   setData: (data) ->
+    self.log "setData"
     result = []
     @i = 0
     @_data = data
@@ -103,8 +108,7 @@ class Cola
 
   wake: () ->
     self.log "wake"
-    if not @sleeping
-      return
+    return if not @sleeping
     @sleeping = false
     @_process()
 
