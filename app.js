@@ -167,8 +167,6 @@
       _data = _.sample(_.pairs(work.reduce_data));
       data = {};
       data[_data[0]] = _data[1];
-      console.log(_data);
-      console.log(data);
       return res.json({
         data: data
       });
@@ -210,44 +208,55 @@
   });
 
   app.get('/data', function(req, res) {
+    /*
+       Devuelve en JSON datos para ser procesados en el cliente.
+    */
+
     var reducing, task_id;
+    if (void 0 === req.param("reducing", req.param("task_id"))) {
+      return res.status(400).send("Missing argument(s)");
+    }
     task_id = req.param("task_id");
     reducing = req.param("reducing") === "true";
     console.log("GET /data con " + reducing + " task_id=" + task_id);
-    if (!task_id) {
-      res.status(400);
-      return res.send("task_id required");
-    }
     return getWork(task_id, function(work) {
-      console.log("work fetched! " + reducing);
+      console.log("work fetched! reducing? " + reducing);
       return sendData(work, reducing, res);
     });
   });
 
   app.post('/data', function(req, res) {
     /* 
-    ( ͡° ͜ʖ ͡°)
-    Postea resultados de los datos ya procesador. Devuelve mas datos para
-    que el cliente siga *laburanding* Haters gonna hate ;).
+    Almacena los resultados de los datos ya procesados. Devuelve mas datos para
+    que el cliente siga con la siguiente tarea.
     */
 
-    var coll, reducing, slice_id, update;
-    console.log("Posting to /data");
+    var coll, key, reducing, slice_id, task_id, update, value, _ref;
+    console.log("Posting to /data", req.param("result"));
     if (void 0 === req.body.task_id || void 0 === req.body.result || void 0 === req.body.reducing) {
       return res.status(400).send("Missing argument(s)");
     }
-    reducing = req.body.reducing === "true";
-    if (!reducing) {
+    reducing = req.body.reducing;
+    task_id = req.param("task_id");
+    if (reducing) {
+      console.log("Store results ", req.param("result"));
+      update = {};
+      _ref = req.param("result");
+      for (key in _ref) {
+        value = _ref[key];
+        update["reduce_results." + key] = value;
+      }
+    } else {
       if (req.body.slice_id === void 0) {
         return res.status(400).send("Missing argument(s)");
       }
+      slice_id = req.param("slice_id");
+      update = {};
+      update["map_results." + slice_id] = req.param("result");
     }
-    slice_id = req.param("slice_id");
-    update = {};
-    update["map_results." + slice_id] = req.param("result");
     coll = db.collection('workers');
     coll.update({
-      _id: new ObjectID(req.param("task_id"))
+      _id: new ObjectID(task_id)
     }, {
       $push: update
     }, function(err) {
@@ -255,8 +264,8 @@
         return console.error("Failed to update:", err);
       }
     });
-    return getWork(req.param("task_id"), function(work) {
-      return sendData(work, req.body.reducing, res);
+    return getWork(task_id, function(work) {
+      return sendData(work, reducing, res);
     });
   });
 

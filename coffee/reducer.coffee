@@ -1,10 +1,11 @@
 MongoClient = require('mongodb').MongoClient
 sleep = require 'sleep'
 assert = require 'assert'
+_ = require "underscore"
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
-WHERE_COND = "this.available_slices.length > 1 && this.status != 'reduced'"
-
+MAPPED = "this.available_slices.length > 1"
+REDUCING = "this.available_slices.length === 0 && this.reduce_results !== {}"
 
 mode = (array) ->
   ###
@@ -35,11 +36,11 @@ mode = (array) ->
 
 process = (task, coll) ->
   ###
+  Prepara task para ser reducido.
+
   Debe buscar la moda de los resultados de map para cada slice, el cual se lo
   considera correcto. Luego une los resultados de los slices y los agrega en
   `reduce_data`. Finalmente saca de `available_slices` los ya procesado. 
-
-  No llama a reduce, pues primero es necesario procesar todos los maps.
   ###
   results = task.map_results
   _real_result = {} # sid => result
@@ -89,22 +90,56 @@ process = (task, coll) ->
       console.log "INFO: #{status}"
 
 
+reducing = (task, coll) ->
+  ###
+  Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se 
+  termino la tarea. De ser asi, debe ser movido a otra colleccion.
+  ###
+  results = {}
+  _real_result = {}
+  _unset = {}
+
+  for key, res of task.reduce_results
+    if res.length >= 5
+      _real_result[key] = mode res
+      results["results.#{key}"] = _real_result[key]
+
+  for key in Object.keys _real_result
+    _unset["reduce_results.#{key}"] = ""
+
+  # Preparo la consulta
+  _update = 
+    $unset: _unset
+    $set: results
+
+  if _.difference(Object.keys(task.reduce_results), Object.keys(_real_result)).length is 0
+    console.log "termino"
+    # TODO: mover el task a otra coleccion
+
+  # Ejecuto la consulta
+  coll.update {_id: task._id}, _update, (err, count, status) ->
+    return console.error "ERROR: #{err}" if err isnt null
+    console.log "INFO: Termino de reducir #{status}"
+
 # Start here!
-console.log "Conecting to DB..."
 MongoClient.connect DB_URL, (err, conn) ->
-  if err isnt null
-    console.log err
-    return
-  console.log "Connected to DB"
+  return console.log(err) if err isnt null
+  console.log "Connected to DB."
 
   coll = conn.collection "workers"
-  coll.find({$where: WHERE_COND}).nextObject (err, task) ->
-    if err isnt null
-      console.log "Error: ", err
-      return
-    if task is null
-      return
+
+  # Preparar las task para que ejecuten el reduce
+  coll.find({$where: MAPPED}).nextObject (err, task) ->
+    return console.log(err) if err isnt null
+    return if task is null
     
-    console.log "Procesando...", task._id
+    console.log "Ha terminado de la fase *map* el task_id: ", task._id
     process task, coll
-    console.log "Finishing proccessing task ", task._id
+
+  # Procesar task que estan siendo reducidas.  
+  coll.find({$where: REDUCING}).nextObject (err, task) ->
+    return console.log(err) if err isnt null
+    return if task is null
+    
+    console.log "Esta siendo reducida el task_id: ", task._id
+    reducing task, coll

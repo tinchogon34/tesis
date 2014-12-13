@@ -34,7 +34,9 @@ initial_object = {
     reduce_results: {
 
     },
-
+    result: {
+        // resultado final
+    },
     // slices cuyos map_results no han sido reducidos
     available_slices: [0, 1],
     slices: [
@@ -56,6 +58,7 @@ mapped_object = {
     map_results: { "0" : [     {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] },  {   "llave" : [     1,  1,  4 ] } ], "1" : [    {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] }, {    "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] }, {    "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] }, {    "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] },  {   "llave" : [     9 ] } ] },
     reduce_data: {},
     reduce_results: {},
+    result: {},
     slices: [  {  "0" : 1,  "1" : 1,  "2" : 2 },  {  "3" : 3 } ] 
 }
 

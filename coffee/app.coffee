@@ -108,18 +108,17 @@ getWork = (task_id=null, callback) ->
 
 
 sendData = (work, reducing, res) ->
-  #console.log work, reducing, res
+  ###
+  Busca en el work datos y los envia al cliente.
+  ###
   if work is null
-    res.status 400
-    return res.send "Work not found"
-
+    return res.status(400).send "Work not found"
+    
   if reducing
     _data = _.sample(_.pairs(work.reduce_data))
     data = {}
     data[_data[0]] = _data[1]
 
-    console.log _data
-    console.log data
     return res.json 
       data: data
 
@@ -170,38 +169,44 @@ app.get '/data', (req, res) ->
 
 app.post '/data', (req, res) ->
   ### 
-  Almacena los resultados de los datos ya procesador. Devuelve mas datos para
+  Almacena los resultados de los datos ya procesados. Devuelve mas datos para
   que el cliente siga con la siguiente tarea.
   ###
 
-  console.log "Posting to /data"
+  console.log "Posting to /data", req.param("result")
   if undefined in [req.body.task_id, req.body.result, req.body.reducing]
     return res.status(400).send "Missing argument(s)"
-  
-  reducing = req.body.reducing is "true"
+
+  reducing = req.body.reducing
   task_id = req.param "task_id"
 
+  # Prepara el obj para actulizar a DB
   if reducing
-    # TODO: do some magic shit
+    console.log "Store results ", req.param "result"
+    update = {}
+    for key, value of req.param "result"
+      update["reduce_results.#{key}"] = value
     
   else
     if req.body.slice_id is undefined
       return res.status(400).send "Missing argument(s)"
-  
+
     slice_id = req.param "slice_id"
     update = {}
     update["map_results.#{slice_id}"] = req.param "result"
     
-    coll = db.collection 'workers'
-    coll.update {
-      _id: new ObjectID(task_id)}, {
-        $push: update
-      }, (err) ->
-        if err isnt null
-          console.error "Failed to update:", err
+  # Realiza la llamada a la DB
+  coll = db.collection 'workers'
+  coll.update {
+    _id: new ObjectID(task_id)}, {
+      $push: update
+    }, (err) ->
+      if err isnt null
+        console.error "Failed to update:", err
 
-    getWork task_id, (work) ->
-      sendData(work, req.body.reducing, res)
+  # Devuelve mas datos
+  getWork task_id, (work) ->
+    sendData(work, reducing, res)
 
 
 # remove?
