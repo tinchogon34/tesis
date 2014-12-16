@@ -13,6 +13,10 @@
       key: "t",
       description: "Object Type",
       args: 1
+    },
+    clean: {
+      key: "c",
+      description: "Clean DB"
     }
   });
 
@@ -154,6 +158,12 @@
     assert.equal(null, err);
     console.log("Connected correctly to server");
     workers = conn.collection("workers");
+    if (options.clean) {
+      workers.remove({}, function(err, result) {
+        assert.equal(err, null);
+        console.log("DB Cleaned");
+      });
+    }
     arr = [];
     i = 0;
     while (i < RECORDS) {

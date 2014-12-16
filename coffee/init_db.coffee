@@ -4,7 +4,8 @@
 # * The following options are supported:
 # *   -r, --records <ARG1>  New Records Quantity
 # *   -t, --type <ARG1>     Object Type
-#
+# *   -c, --clean           Clean DB
+
 
 # Manejo de argumentos
 stdio = require("stdio")
@@ -18,6 +19,10 @@ options = stdio.getopt(
     key: "t"
     description: "Object Type"
     args: 1
+
+  clean:
+    key: "c"
+    description: "Clean DB"
 )
 
 # Funciones map y result de ejemplo 
@@ -218,6 +223,11 @@ MongoClient.connect url, (err, conn) ->
   assert.equal null, err
   console.log "Connected correctly to server"
   workers = conn.collection("workers")
+  if options.clean
+    workers.remove {}, (err, result) ->
+      assert.equal err, null
+      console.log "DB Cleaned"
+      return
   arr = []
   i = 0
 
