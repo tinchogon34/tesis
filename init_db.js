@@ -1,12 +1,23 @@
 "use strict";
 /*
  * Script for initialization the Database.
- * Usage: node init_db.js <new_records>
- */
-/* Funciones map y result de ejemplo */
+ * USAGE: node init_db.js [OPTION1] [OPTION2]... arg1 arg2...
+ * The following options are supported:
+ *   -r, --records <ARG1>  New Records Quantity
+ *   -t, --type <ARG1>     Object Type
+*/
 
+// Manejo de argumentos
+var stdio = require('stdio');
+var options = stdio.getopt({
+    'records': {key: 'r', description: 'New Records Quantity', args: 1},
+    'type': {key: 't', description: 'Object Type', args: 1}
+});
+
+/* Funciones map y result de ejemplo */
 var MAP = "investigador_map = function (k, v) {\r\n  self.log(\"inv in\");\r\n  var ms = 1000;\r\n  var started = new Date().getTime();\r\n  while((new Date().getTime() - started) < ms) {\r\n  }\r\n  self.emit(\"llave\", v*v);\r\n  self.log(\"inv in out\");\r\n};";
 var REDUCE = "investigador_reduce = function (k, vals) {\r\n  var total = vals.reduce(function(a, b) {\r\n    return parseInt(a) + parseInt(b);\r\n  });\r\n  self.emit(k, total);\r\n};";
+
 // clien: ireduce = function (k, vals) {var total = vals.reduce(function(a, b) {return parseInt(a) + parseInt(b);});  return total;};
 
 // sample object
@@ -99,11 +110,11 @@ var reduced_object = {
 var MongoClient = require('mongodb').MongoClient,
     assert = require('assert'),
     _ = require("underscore"),
-    RECORDS = process.argv[2] || 10,
+    RECORDS = options.records || 10,
     url = 'mongodb://localhost:27017/tesis',
     obj = null;
 
-switch(process.argv[3]) {
+switch(options.type) {
     case "mapped":
         obj = mapped_object;
         break;
