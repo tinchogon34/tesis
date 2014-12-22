@@ -10,19 +10,31 @@ Solo se pide un Worker y luego datos.
 ###
 
 # TODO: Varios de estas definiciones no sirven. Borrarlas.
+sleep_time = undefined
+slice_id = undefined
+start_worker = undefined
+task_id = undefined
+tiempo_de_ejecucion = undefined
+worker = undefined
+worker_code = undefined
+
 POST_URL = "http://127.0.0.1:3000/data"
 LOG_URL = "http://127.0.0.1:3000/log"
 WORK_URL = "http://127.0.0.1:3000/work"
 DATA_URL = "http://127.0.0.1:3000/data"
 tiempo_de_ejecucion = 5000
 sleep_time = 2500
+worker = null
 task_id = null
 slice_id = null
 worker_code = null
 data = null
 get_work_interval = null
 get_work_running = false
+blob = null
 intervalId = null 
+pause = true
+
 
 class _Worker
   # Encapsula los detalles del Worker.
@@ -71,7 +83,7 @@ class _Worker
     @_ready
 
 class Task
-  # Se encarga de la comunicación con el servidor de tareas.
+  # Se encarga de la comunicaciÃ³n con el servidor de tareas.
 
   constructor: () ->
     @id = null
