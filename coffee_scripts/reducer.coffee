@@ -1,11 +1,21 @@
+###
+  Debe ser ejecutado en segundo plano. Es un servicio que busca tareas que
+  para cambiarlas de estado. Estos cambios suceden cuando
+  1) Termino la fase de map y debe empezar la de reduce.
+  2) Durante la fase reduce. Adicionalmente detecta cuando termina y mueve la
+  tarea a otra Colección.
+###
+# dependencias
 MongoClient = require('mongodb').MongoClient
 sleep = require 'sleep'
 assert = require 'assert'
 _ = require "underscore"
 
+
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
 MAPPED = "this.available_slices.length > 1"
 REDUCING = "this.available_slices.length === 0 && this.reduce_results !== {}"
+
 
 mode = (array) ->
   ###
@@ -33,6 +43,7 @@ mode = (array) ->
       maxCount = modeMap[el]
     
   JSON.parse maxEl
+
 
 process = (task, coll) ->
   ###
@@ -112,26 +123,28 @@ reducing = (task, coll) ->
     $unset: _unset
     $set: results
 
-  if _.difference(Object.keys(task.reduce_results), Object.keys(_real_result)).length is 0
-    console.log "termino"
-    # TODO: mover el task a otra coleccion
-
   # Ejecuto la consulta
   coll.update {_id: task._id}, _update, (err, count, status) ->
     return console.error "ERROR: #{err}" if err isnt null
     console.log "INFO: Termino de reducir #{status}"
 
-# Start here!
+  if _.difference(Object.keys(task.reduce_results), Object.keys(_real_result)).length is 0
+    console.log "termino"
+    # TODO: mover el task a otra coleccion
+
+
 MongoClient.connect DB_URL, (err, conn) ->
   return console.log(err) if err isnt null
-  console.log "Connected to DB."
-
+  console.log "Conección exitosa a la BD."
   coll = conn.collection "workers"
 
   # Preparar las task para que ejecuten el reduce
   coll.find({$where: MAPPED}).nextObject (err, task) ->
     return console.log(err) if err isnt null
-    return if task is null
+    if task is null
+      one = true 
+      console.log "No hay tareas a mapear"
+      return
     
     console.log "Ha terminado de la fase *map* el task_id: ", task._id
     process task, coll
@@ -139,7 +152,8 @@ MongoClient.connect DB_URL, (err, conn) ->
   # Procesar task que estan siendo reducidas.  
   coll.find({$where: REDUCING}).nextObject (err, task) ->
     return console.log(err) if err isnt null
-    return if task is null
+    return two = true if task is null
     
     console.log "Esta siendo reducida el task_id: ", task._id
     reducing task, coll
+
