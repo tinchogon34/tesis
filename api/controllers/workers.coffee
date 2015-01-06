@@ -1,7 +1,7 @@
 mongoose = require("mongoose")
 Worker = mongoose.model("Worker")
 
-#GET - Return all workers in the DB
+#GET - Devuelve todos los Workers en la DB
 #exports.findAllWorkers = (req, res) ->
 #  Worker.find (err, workers) ->
 #    res.send 500, err.message if err
@@ -9,7 +9,7 @@ Worker = mongoose.model("Worker")
 #    return
 #  return
 
-#GET - Return a Worker with specified ID
+#GET - Devuelve un worker con el ID especificado
 exports.findById = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.send(500, err.message)  if err
@@ -17,7 +17,7 @@ exports.findById = (req, res) ->
     return
   return
 
-#POST - Insert a new Worker in the DB
+#POST - Inserta un nuevo worker en la DB
 exports.addWorker = (req, res) ->
   worker = new Worker(
     data: req.body.data
@@ -32,7 +32,7 @@ exports.addWorker = (req, res) ->
     return
   return
 
-#PUT - Update a register already exists
+#PUT - Actualiza un worker existente
 exports.updateWorker = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     worker.data = req.body.data if req.body.data
@@ -47,7 +47,7 @@ exports.updateWorker = (req, res) ->
     return
   return
 
-#DELETE - Delete a Worker with specified ID
+#DELETE - Borra un worker con el ID especificado
 exports.deleteWorker = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.send(500, err.message) if err
@@ -58,7 +58,7 @@ exports.deleteWorker = (req, res) ->
     return
   return
 
-#POST - Add data to existing Worker with specified ID
+#POST - Agrega datos al worker con el ID especificado
 exports.addData = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     worker.data.concat req.params.data
