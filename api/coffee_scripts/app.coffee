@@ -32,6 +32,7 @@ app.get '/api/v1/workers/:id', workersController.findById
 app.put '/api/v1/workers/:id', workersController.updateWorker
 app.delete '/api/v1/workers/:id', workersController.deleteWorker
 
+app.get '/api/v1/workers/:id/result', workersController.getResult
 app.post '/api/v1/workers/:id/addData', workersController.addData
 
 app.listen '8080'
