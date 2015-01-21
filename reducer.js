@@ -180,10 +180,10 @@
     coll = conn.collection("workers");
     coll.find({
       $where: MAPPED
-    }).nextObject(function(err, task) {
+    }).each(function(err, task) {
       var one;
       if (err !== null) {
-        return console.log(err);
+        return console.error(err);
       }
       if (task === null) {
         one = true;
@@ -195,10 +195,10 @@
     });
     return coll.find({
       $where: REDUCING
-    }).nextObject(function(err, task) {
+    }).each(function(err, task) {
       var two;
       if (err !== null) {
-        return console.log(err);
+        return console.error(err);
       }
       if (task === null) {
         return two = true;

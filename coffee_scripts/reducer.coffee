@@ -139,8 +139,8 @@ MongoClient.connect DB_URL, (err, conn) ->
   coll = conn.collection "workers"
 
   # Preparar las task para que ejecuten el reduce
-  coll.find({$where: MAPPED}).nextObject (err, task) ->
-    return console.log(err) if err isnt null
+  coll.find({$where: MAPPED}).each (err, task) ->
+    return console.error(err) if err isnt null
     if task is null
       one = true 
       console.log "No hay tareas a mapear"
@@ -150,8 +150,8 @@ MongoClient.connect DB_URL, (err, conn) ->
     process task, coll
 
   # Procesar task que estan siendo reducidas.  
-  coll.find({$where: REDUCING}).nextObject (err, task) ->
-    return console.log(err) if err isnt null
+  coll.find({$where: REDUCING}).each (err, task) ->
+    return console.error(err) if err isnt null
     return two = true if task is null
     
     console.log "Esta siendo reducida el task_id: ", task._id
