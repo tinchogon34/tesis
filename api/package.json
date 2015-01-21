@@ -10,6 +10,9 @@
     "mongodb": "1.4.x",
     "body-parser": "1.4.x",
     "method-override": "2.3.x",
-    "mongoose": "3.8.x"
+    "mongoose": "3.8.x",
+    "jsonwebtoken": "3.2.x",
+    "express-jwt": "1.0.0",
+    "bcrypt": "0.8.x"
   }
 }
