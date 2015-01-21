@@ -19,7 +19,9 @@ mongoose.connect db_url, (err, connection) ->
 	assert.ifError err
 
 #Import models and controllers
-models = require('./models/worker')(app, mongoose)
+workerModel = require('./models/worker')(app, mongoose)
+userModel = require('./models/user')(app, mongoose)
+workerResultModel = require('./models/worker_result')(app, mongoose)
 workersController = require('./controllers/workers')
 workerResultsController = require('./controllers/workerResults')
 usersController = require('./controllers/users')
