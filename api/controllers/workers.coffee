@@ -12,7 +12,8 @@ Worker = mongoose.model("Worker")
 #GET - Devuelve un worker con el ID especificado
 exports.findById = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
-    return res.send(500, err.message)  if err
+    return res.status(500).jsonp { message: err.message } if err
+    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id.equals(worker.user_id)
     res.status(200).jsonp worker
     return
   return
@@ -25,9 +26,10 @@ exports.addWorker = (req, res) ->
     ireduce: "investigador_reduce = " + req.body.ireduce
     available_slices: req.body.available_slices
     slices: req.body.slices
+    user_id: req.user.id
   )
   worker.save (err, worker) ->
-    return res.send(500, err.message) if err
+    return res.status(500).jsonp { message: err.message } if err
     res.status(200).jsonp worker
     return
   return
@@ -50,10 +52,11 @@ exports.addWorker = (req, res) ->
 #DELETE - Borra un worker con el ID especificado
 exports.deleteWorker = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
-    return res.send(500, err.message) if err
+    return res.status(500).jsonp { message: err.message } if err
+    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id.equals(worker.user_id)
     worker.remove (err) ->
-      return res.send(500, err.message) if err
-      res.status 200
+      return res.status(500).jsonp { message: err.message } if err
+      res.status(200)
       return
     return
   return

@@ -13,7 +13,11 @@
       reduce_results: mongoose.Schema.Types.Mixed,
       result: mongoose.Schema.Types.Mixed,
       available_slices: [Number],
-      slices: [mongoose.Schema.Types.Mixed]
+      slices: [mongoose.Schema.Types.Mixed],
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
     });
     return mongoose.model('Worker', workerSchema);
   };

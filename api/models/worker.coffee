@@ -9,6 +9,7 @@ exports = module.exports = (app, mongoose) ->
 		result: mongoose.Schema.Types.Mixed
 		available_slices: [Number]
 		slices: [mongoose.Schema.Types.Mixed]
+		user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 	)
 
 	mongoose.model 'Worker', workerSchema
