@@ -9,7 +9,33 @@ certFile = fs.readFileSync('./ssl/api.crt')
 
 login_url = 'https://localhost:8080/login'
 dummy_url = 'https://localhost:8080/api/v1/dummy'
+add_worker_url = 'https://localhost:8080/api/v1/workers'
 fake_token = 'faketoken'
+
+newWorker =
+	data:
+		0: 1
+		1: 1
+		2: 2
+		3: 3
+	imap: "investigador_map = function (k, v) {\r\n  self.log(\"inv in\"); self.emit(\"llave\", v*v);\r\n  self.log(\"inv in out\");\r\n};"
+	ireduce: "investigador_reduce = function (k, vals) {\r\n  var total = vals.reduce(function(a, b) {\r\n    return parseInt(a) + parseInt(b);\r\n  });\r\n  self.emit(k, total);\r\n};"
+	available_slices: [0, 1]
+	slices: [
+        {
+            0: 1
+            1: 1
+            2: 2
+        }
+        {
+            3: 3
+        }
+    ]
+
+
+loginCredentials =
+	username: 'test'
+	password: 'test'
 
 defaultOptions =
 	json: true	
@@ -19,10 +45,6 @@ defaultOptions =
 		securityOptions: 'SSL_OP_NO_SSLv3'
 
 request.defaults defaultOptions
-
-loginCredentials =
-	username: 'test'
-	password: 'test'
 
 request.post login_url, { json: loginCredentials }, (error, response, body) ->
 	assert.ifError error
@@ -38,6 +60,11 @@ request.post login_url, { json: loginCredentials }, (error, response, body) ->
 	request.get(dummy_url, (error, response, body) ->
 		assert.ifError error
 		assert.equal response.statusCode, 200).auth null, null, true, token
+
+	request.post(add_worker_url, {json: newWorker}, (error, response, createdWorker) ->
+		assert.ifError error
+		assert.equal response.statusCode, 200	
+	).auth null, null, true, token
 
 
 

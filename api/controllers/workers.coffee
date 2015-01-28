@@ -26,7 +26,7 @@ exports.addWorker = (req, res) ->
     ireduce: "investigador_reduce = " + req.body.ireduce
     available_slices: req.body.available_slices
     slices: req.body.slices
-    user_id: req.user.id
+    user: req.user._id
   )
   worker.save (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
@@ -53,7 +53,7 @@ exports.addWorker = (req, res) ->
 exports.deleteWorker = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
-    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id.equals(worker.user_id)
+    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id.equals(worker.user.id)
     worker.remove (err) ->
       return res.status(500).jsonp { message: err.message } if err
       res.status(200)
