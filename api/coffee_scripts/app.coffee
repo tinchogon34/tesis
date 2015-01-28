@@ -42,6 +42,9 @@ app.use (err, req, res, next) ->
 	res.status(401).jsonp { message: 'You must login first' } if err.constructor.name == 'UnauthorizedError'
 
 #API Routes
+app.get '/api/v1/dummy', (req, res) ->
+	res.send 200
+	
 app.post '/api/v1/workers', workersController.addWorker
 app.get '/api/v1/workers/:id', workersController.findById
 app.delete '/api/v1/workers/:id', workersController.deleteWorker

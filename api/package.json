@@ -13,6 +13,7 @@
     "mongoose": "3.8.x",
     "jsonwebtoken": "3.2.x",
     "express-jwt": "1.0.0",
-    "bcrypt": "0.8.x"
+    "bcrypt": "0.8.x",
+    "request": "2.51.x"
   }
 }
