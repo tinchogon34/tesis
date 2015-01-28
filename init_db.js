@@ -61,7 +61,8 @@ var initial_object = {
         }, {
             3: 3
         }
-    ]
+    ],
+    enabled_to_process: true
 };
 
 var mapped_object = {
@@ -81,7 +82,8 @@ var mapped_object = {
     reduce_data: {},
     reduce_results: {},
     result: {},
-    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }]
+    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }],
+    enabled_to_process: true
 };
 
 /* Objecto ya reducido. Listo para ser procesado y finalizado */
@@ -105,7 +107,8 @@ var reduced_object = {
         ]
     },
     result: {},
-    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }]
+    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }],
+    enabled_to_process: true
 };
 
 // imports

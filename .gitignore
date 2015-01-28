@@ -1,2 +1,6 @@
 node_modules
 npm-debug.log
+app.js
+reducer.js
+worker.js
+public/proc.js
