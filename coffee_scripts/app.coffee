@@ -85,10 +85,10 @@ getWork = (task_id=null, callback) ->
   Elije uno aleatoriamente.
   Si hay un Task listo para reducir tiene mayor prioridad.
   ###
-  coll.find({$where: "this.available_slices.length == 0"}).count (err, _n) ->
+  coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).count (err, _n) ->
     console.log "hay para reducir #{_n}"
     if _n isnt 0
-      coll.find({$where: "this.available_slices.length == 0"}).limit(1).skip(
+      coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
         _.random(_n - 1)).nextObject((err, item) ->
           if err
             console.error err
@@ -97,8 +97,8 @@ getWork = (task_id=null, callback) ->
         )
 
     else
-      coll.find({$where: "this.available_slices.length > 1"}).count (err, _n) ->
-        coll.find({$where: "this.available_slices.length > 1"}).limit(1).skip(
+      coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
+        coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(
           _.random(_n - 1)).nextObject((err, item) ->
             if err
               console.error err

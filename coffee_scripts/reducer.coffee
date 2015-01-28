@@ -13,8 +13,8 @@ _ = require "underscore"
 
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
-MAPPED = "this.available_slices.length > 1"
-REDUCING = "this.available_slices.length === 0 && this.reduce_results !== {}"
+MAPPED = "this.available_slices.length > 1 && this.enabled_to_process"
+REDUCING = "this.available_slices.length === 0 && this.reduce_results !== {} && this.enabled_to_process"
 
 
 mode = (array) ->
@@ -101,7 +101,7 @@ process = (task, coll) ->
       console.log "INFO: #{status}"
 
 
-reducing = (task, coll) ->
+reducing = (task, coll, conn) ->
   ###
   Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se 
   termino la tarea. De ser asi, debe ser movido a otra colleccion.
@@ -131,7 +131,13 @@ reducing = (task, coll) ->
   if _.difference(Object.keys(task.reduce_results), Object.keys(_real_result)).length is 0
     console.log "termino"
     # TODO: mover el task a otra coleccion
-
+    worker_results = conn.collection "worker_results"
+    worker_result =
+      result: results
+      user: task.user
+      worker: task._id
+    worker_results.insert [worker_result], (err, result) ->
+      assert.ifError err
 
 MongoClient.connect DB_URL, (err, conn) ->
   return console.log(err) if err isnt null
@@ -155,5 +161,5 @@ MongoClient.connect DB_URL, (err, conn) ->
     return two = true if task is null
     
     console.log "Esta siendo reducida el task_id: ", task._id
-    reducing task, coll
+    reducing task, coll, conn
 

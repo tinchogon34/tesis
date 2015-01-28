@@ -10,6 +10,7 @@ exports = module.exports = (app, mongoose) ->
 		available_slices: [Number]
 		slices: [mongoose.Schema.Types.Mixed]
 		user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+		enabled_to_process: Boolean
 	)
 
 	mongoose.model 'Worker', workerSchema

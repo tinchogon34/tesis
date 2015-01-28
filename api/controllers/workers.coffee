@@ -13,7 +13,8 @@ Worker = mongoose.model("Worker")
 exports.findById = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
-    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id == worker.user.toString()
+    return res.send 404 unless worker
+    return res.status(401).jsonp { message: "Not your worker"} unless mongoose.Types.ObjectId(req.user._id).equals(worker.user)
     res.status(200).jsonp worker
     return
   return
@@ -27,6 +28,7 @@ exports.addWorker = (req, res) ->
     available_slices: req.body.available_slices
     slices: req.body.slices
     user: req.user._id
+    enabled_to_process: false
   )
   worker.save (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
@@ -53,7 +55,8 @@ exports.addWorker = (req, res) ->
 exports.deleteWorker = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
-    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id == worker.user.toString()
+    return res.send 404 unless worker
+    return res.status(401).jsonp { message: "Not your worker"} unless mongoose.Types.ObjectId(req.user._id).equals(worker.user)
     worker.remove (err) ->
       return res.status(500).jsonp { message: err.message } if err
       res.send 200
@@ -62,15 +65,29 @@ exports.deleteWorker = (req, res) ->
   return
 
 #POST - Agrega datos al worker con el ID especificado
-#exports.addData = (req, res) ->
-#  Worker.findById req.params.id, (err, worker) ->
-#    return res.send(500, err.message) if err
-#    worker.data.concat req.params.data
-#    worker.available_slices.concat req.params.available_slices
-#    worker.slices.concat req.params.slices
-#    worker.save (err) ->
-#      return res.send(500, err.message) if err
-#      res.status(200).jsonp worker
-#      return
-#    return
-#  return
+exports.addData = (req, res) ->
+  Worker.findById req.params.id, (err, worker) ->
+    return res.send(500, err.message) if err
+    return res.send 404 unless worker
+    worker.data.concat req.params.data
+    worker.available_slices.concat req.params.available_slices
+    worker.slices.concat req.params.slices
+    worker.save (err) ->
+      return res.send(500, err.message) if err
+      res.status(200).jsonp worker
+      return
+    return
+  return
+
+#POST - Actualiza el worker con el ID especificado para que pueda ser procesado
+exports.enableToProcess = (req, res) ->
+  Worker.findById req.params.id, (err, worker) ->
+    return res.send(500, err.message) if err
+    return res.send 404 unless worker
+    worker.enabled_to_process = true
+    worker.save (err) ->
+      return res.send(500, err.message) if err
+      res.status(200).jsonp worker
+      return
+    return
+  return

@@ -10,6 +10,7 @@ certFile = fs.readFileSync('./ssl/api.crt')
 login_url = 'https://localhost:8080/login'
 dummy_url = 'https://localhost:8080/api/v1/dummy'
 workers_url = 'https://localhost:8080/api/v1/workers'
+worker_results_url = 'https://localhost:8080/api/v1/worker_results'
 fake_token = 'faketoken'
 
 newWorker =
@@ -71,14 +72,22 @@ request.post login_url, { json: loginCredentials }, (error, response, body) ->
 			assert.ifError error
 			assert.equal response.statusCode, 200
 
-			#Test workers controller deleteWorker
-			request.del(workers_url+'/'+workerFound._id, (error, response, body) ->
+			#Test worker_results controller getResult
+			request.get(worker_results_url+'/'+workerFound._id, (error, response, workerResult) ->
+				assert.ifError error
+				assert.equal response.statusCode, 404
+			).auth null, null, true, token
+
+			#Test workers controller enableToProcess
+			request.post(workers_url+'/'+workerFound._id+'/enable', {json: true}, (error, response, workerEnabled) ->
 				assert.ifError error
 				assert.equal response.statusCode, 200
-			).auth null, null, true, token	
+
+				#Test workers controller deleteWorker
+				request.del(workers_url+'/'+workerEnabled._id, (error, response, body) ->
+					assert.ifError error
+					assert.equal response.statusCode, 200
+				).auth null, null, true, token
+			).auth null, null, true, token
 		).auth null, null, true, token		
 	).auth null, null, true, token
-
-
-
-

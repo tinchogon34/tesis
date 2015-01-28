@@ -17,7 +17,8 @@
       user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-      }
+      },
+      enabled_to_process: Boolean
     });
     return mongoose.model('Worker', workerSchema);
   };
