@@ -9,7 +9,7 @@ certFile = fs.readFileSync('./ssl/api.crt')
 
 login_url = 'https://localhost:8080/login'
 dummy_url = 'https://localhost:8080/api/v1/dummy'
-add_worker_url = 'https://localhost:8080/api/v1/workers'
+workers_url = 'https://localhost:8080/api/v1/workers'
 fake_token = 'faketoken'
 
 newWorker =
@@ -32,20 +32,20 @@ newWorker =
         }
     ]
 
+fakeLoginCredentials =
+	username: 'fake_test'
+	password: 'fake_test'
 
 loginCredentials =
 	username: 'test'
 	password: 'test'
 
-defaultOptions =
-	json: true	
-	agentOptions:
-		cert: certFile
-		key: keyFile
-		securityOptions: 'SSL_OP_NO_SSLv3'
+#Test fakeCredentials should not return token
+request.post login_url, { json: fakeLoginCredentials }, (error, response, body) ->
+	assert.ifError error
+	assert.equal response.statusCode, 401
 
-request.defaults defaultOptions
-
+#Test realCredentials should return token
 request.post login_url, { json: loginCredentials }, (error, response, body) ->
 	assert.ifError error
 	assert.equal response.statusCode, 200
@@ -61,9 +61,22 @@ request.post login_url, { json: loginCredentials }, (error, response, body) ->
 		assert.ifError error
 		assert.equal response.statusCode, 200).auth null, null, true, token
 
-	request.post(add_worker_url, {json: newWorker}, (error, response, createdWorker) ->
+	#Test workers controller addWorker
+	request.post(workers_url, {json: newWorker}, (error, response, createdWorker) ->
 		assert.ifError error
-		assert.equal response.statusCode, 200	
+		assert.equal response.statusCode, 200
+
+		#Test workers controller findById
+		request.get(workers_url+'/'+createdWorker._id, {json: true}, (error, response, workerFound) ->
+			assert.ifError error
+			assert.equal response.statusCode, 200
+
+			#Test workers controller deleteWorker
+			request.del(workers_url+'/'+workerFound._id, (error, response, body) ->
+				assert.ifError error
+				assert.equal response.statusCode, 200
+			).auth null, null, true, token	
+		).auth null, null, true, token		
 	).auth null, null, true, token
 
 

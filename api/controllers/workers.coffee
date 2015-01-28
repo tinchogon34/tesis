@@ -13,7 +13,7 @@ Worker = mongoose.model("Worker")
 exports.findById = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
-    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id.equals(worker.user_id)
+    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id == worker.user.toString()
     res.status(200).jsonp worker
     return
   return
@@ -53,10 +53,10 @@ exports.addWorker = (req, res) ->
 exports.deleteWorker = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.status(500).jsonp { message: err.message } if err
-    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id.equals(worker.user.id)
+    return res.status(401).jsonp { message: "Not your worker"} unless req.user._id == worker.user.toString()
     worker.remove (err) ->
       return res.status(500).jsonp { message: err.message } if err
-      res.status(200)
+      res.send 200
       return
     return
   return
