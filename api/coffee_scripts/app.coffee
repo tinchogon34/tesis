@@ -48,6 +48,7 @@ app.get '/api/v1/dummy', (req, res) ->
 app.post '/api/v1/workers', workersController.addWorker
 app.get '/api/v1/workers/:id', workersController.findById
 app.delete '/api/v1/workers/:id', workersController.deleteWorker
+app.post '/api/v1/workers/:id/addData', workersController.addData
 app.post '/api/v1/workers/:id/enable', workersController.enableToProcess
 
 app.get '/api/v1/worker_results/:id', workerResultsController.getResult

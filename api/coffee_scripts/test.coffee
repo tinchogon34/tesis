@@ -1,11 +1,11 @@
-fs = require 'fs'
+#fs = require 'fs'
 request = require 'request'
 assert = require 'assert'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-keyFile =  fs.readFileSync('./ssl/api.key')
-certFile = fs.readFileSync('./ssl/api.crt')
+#keyFile =  fs.readFileSync('./ssl/api.key')
+#certFile = fs.readFileSync('./ssl/api.crt')
 
 login_url = 'https://localhost:8080/login'
 dummy_url = 'https://localhost:8080/api/v1/dummy'

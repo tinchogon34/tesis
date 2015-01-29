@@ -1,0 +1,10 @@
+{
+  "name": "HashCrackExample",
+  "description": "Example of using API with test example",
+  "version": "0.0.1",
+  "private": true,
+  "preferGlobal": false,
+  "dependencies": {
+    "request": "2.51.x"
+  }
+}
