@@ -69,9 +69,11 @@ exports.addData = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
     return res.send(500, err.message) if err
     return res.send 404 unless worker
-    worker.data.concat req.params.data
-    worker.available_slices.concat req.params.available_slices
-    worker.slices.concat req.params.slices
+    worker.data = worker.data || {}
+    for attrname of req.body.data
+      worker.data[attrname] = req.body.data[attrname]
+    worker.available_slices = worker.available_slices.concat req.body.available_slices
+    worker.slices = worker.slices.concat req.body.slices
     worker.save (err) ->
       return res.send(500, err.message) if err
       res.status(200).jsonp worker

@@ -12,4 +12,6 @@ coffee -o . coffee_scripts/reducer.coffee
 coffee -o . coffee_scripts/worker.coffee
 coffee -o public/ coffee_scripts/proc.coffee
 
+#EXAMPLES coffees
+coffee -o examples/hash_crack/ examples/hash_crack/coffee_scripts/app.coffee
 
