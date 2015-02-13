@@ -6,6 +6,6 @@
   "preferGlobal": false,
   "dependencies": {
     "request": "2.51.x",
-    "lazy": "1.0.x"
+    "line-by-line": "0.1.x"
   }
 }

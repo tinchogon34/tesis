@@ -1,4 +1,4 @@
-lineReader = require 'line-reader'
+LineByLineReader = require 'line-by-line'
 fs = require 'fs'
 request = require 'request'
 assert = require 'assert'
@@ -12,7 +12,20 @@ login_url = 'https://localhost:8080/login'
 workers_url = 'https://localhost:8080/api/v1/workers'
 worker_results_url = 'https://localhost:8080/api/v1/worker_results'
 file = './text'
-
+lr = new LineByLineReader(file)
+index = 0
+hash = {}
+token = null
+createdWorker = null
+lr.pause()
+lr.on 'line', (line)->
+	hash[index] = line
+	if (index+1) % 40 == 0
+		lr.pause()
+		console.log index
+		send_data hash, token, createdWorker
+		hash = {}
+	index++
 #digits = "abcdefghijklmnñopqrstuvwxyz".split('')
 
 newWorker =
@@ -28,72 +41,44 @@ request.post login_url, { json: loginCredentials }, (error, response, body) ->
 	assert.equal response.statusCode, 200
 	token = body.token
 
-	request.post(workers_url, {json: newWorker}, (error, response, createdWorker) ->
+	request.post(workers_url, {json: newWorker}, (error, response, worker) ->
 		assert.ifError error
 		assert.equal response.statusCode, 200
 
-		index = 0
-		hash = {}
-		lineReader.eachLine file, (line, last) ->
-		  	hash[index] = line
-	  		if (index+1) % 800 == 0
-	  			console.log index
-	  			console.log Object.keys(hash).length
-	  			a.i = {}
-		  		send_data hash, token, createdWorker
-		  		hash = {}
-		  	index++
-		  	return
-	).auth null, null, true, token	
+		createdWorker = worker
+		lr.resume()
+	).auth null, null, true, token
 
 get_slices = (data, size) ->
-	# { "0" : 1, "1" : 1, "2" : 2, "3" : 3 }
-	# { "0": { "0" : 1, "1" : 1, "2" : 2 }, 1: {"3" : 3} }
-	hash = {}
+	# {0: ..., 1: ...., 2: ..., 3: ...., 4: ....}
+	# [{0: ..., 1: ...}, {2: ..., 3: ....}, {4: ....}]
+
+	arr = []
 	keysLength = Object.keys(data).length
-	hash[i] = {} for i in [0..Math.floor(keysLength/size)]
+
+	arr[i] = {} for i in [0...Math.ceil(keysLength/size)]
 	i = 0
 	contador = 0    
 	for key, value of data
-		#hash[i] ||= {}
-		hash[i][key] ||= {}
-		hash[i][key] = value
+		arr[i][key] = value
 		contador++
 		i++ if (contador) % size == 0
-	return hash
+	return arr
 
 send_data = (data, token, worker) ->
-	slices = get_slices(data, 40)
-	available_slices = Object.keys(slices)
-	console.log available_slices.length
-	a.i = {}
+
+	slices = get_slices(data, 10)
+	available_slices = []
+	available_slices[i] = i for i in [0...slices.length]
 	
-#	json = 
-#		data: data
-#		available_slices: available_slices
-#		slices: slices
-#	request.post(workers_url+'/'+worker._id+'/addData', {json: json}, (error, response, updatedWorker) ->
-#		assert.ifError error
-#		assert.equal response.statusCode, 200
-#	).auth null, null, true, token
+	json = 
+		data: data
+		available_slices: available_slices
+		slices: slices
 
+	request.post(workers_url+'/'+worker._id+'/addData', {json: json}, (error, response, updatedWorker) ->
+		assert.ifError error
+		assert.equal response.statusCode, 200
 
-
-#request.post login_url, { json: loginCredentials }, (error, response, body) ->
-#	assert.ifError error
-#	assert.equal response.statusCode, 200
-#	token = body.token
-#
-#	request.post(workers_url, {json: newWorker}, (error, response, createdWorker) ->
-#		assert.ifError error
-#		assert.equal response.statusCode, 200
-		#pick(i,[],0,digits)
-#
-#		send_data(1, token, 2, createdWorker)
-#	).auth null, null, true, token
-
-#i = 1
-#words = []
-#while i <= 8
-#	words = words.concat pick(i,[],0,digits)
-#	i++
+		lr.resume()
+	).auth null, null, true, token
