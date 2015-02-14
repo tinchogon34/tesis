@@ -17,20 +17,23 @@ index = 0
 hash = {}
 token = null
 createdWorker = null
+slices_count = 0
 lr.pause()
 lr.on 'line', (line)->
 	hash[index] = line
-	if (index+1) % 40 == 0
+	if (index+1) % 100 == 0
 		lr.pause()
 		console.log index
-		send_data hash, token, createdWorker
+		send_data hash
 		hash = {}
 	index++
+lr.on 'end', ->
+	enable_to_process()
 #digits = "abcdefghijklmnñopqrstuvwxyz".split('')
 
 newWorker =
-	imap: "function (k, v) {var countWords = function(s){ s = s.replace(/(^\s*)|(\s*$)/gi,\"\");s = s.replace(/[ ]{2,}/gi,\" \");s = s.replace(/\n /,\"\n\");return s.split(' ').length;};self.log('inv in');self.emit('llave', countWords(v));self.log('inv in out');};"
-	ireduce: "function (k, vals) { var total = vals.reduce(function(a, b) {return parseInt(a) + parseInt(b);});self.emit(k, total);};"
+	imap: 'function (k, v) {var countWords = function(s){s = s.replace(/(^\s*)|(\s*$)/gi,"");s = s.replace(/[ ]{2,}/gi," ");s = s.replace(/\\n /,"\\n");return s.split(" ").length;};self.log("inv in");self.emit("llave", countWords(v));self.log("inv in out");};'
+	ireduce: 'function (k, vals) { var total = vals.reduce(function(a, b) {return parseInt(a) + parseInt(b);});self.emit(k, total);};'
 
 loginCredentials =
 	username: 'investigador'
@@ -65,20 +68,27 @@ get_slices = (data, size) ->
 		i++ if (contador) % size == 0
 	return arr
 
-send_data = (data, token, worker) ->
+send_data = (data) ->
 
-	slices = get_slices(data, 10)
+	slices = get_slices(data, 50)
 	available_slices = []
-	available_slices[i] = i for i in [0...slices.length]
+	available_slices[i] = (i+slices_count) for i in [0...slices.length]
+	slices_count += slices.length
 	
 	json = 
 		data: data
 		available_slices: available_slices
 		slices: slices
 
-	request.post(workers_url+'/'+worker._id+'/addData', {json: json}, (error, response, updatedWorker) ->
+	request.post(workers_url+'/'+createdWorker._id+'/addData', {json: json}, (error, response, updatedWorker) ->
 		assert.ifError error
 		assert.equal response.statusCode, 200
 
 		lr.resume()
+	).auth null, null, true, token
+
+enable_to_process = ->
+	request.post(workers_url+'/'+createdWorker._id+'/enable', {json: true}, (error, response, updatedWorker) ->
+		assert.ifError error
+		assert.equal response.statusCode, 200
 	).auth null, null, true, token
