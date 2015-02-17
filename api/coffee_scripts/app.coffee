@@ -16,13 +16,13 @@ db_url = 'mongodb://localhost/tesis'
 db = null
 SECRET = '0239f0j3924ufm28j4y9f23842yf3984'
 options =
-	key: fs.readFileSync('./ssl/api.key')
-	cert: fs.readFileSync('./ssl/api.crt')
+  key: fs.readFileSync('./ssl/api.key')
+  cert: fs.readFileSync('./ssl/api.crt')
 
 
 # Connect to DB
 mongoose.connect db_url, (err, connection) ->
-	assert.ifError err
+  assert.ifError err
 
 #Import models and controllers
 workerModel = require('./models/worker')(app, mongoose)
@@ -39,11 +39,11 @@ app.use bodyParser.urlencoded extended: true
 app.use '/api', expressjwt({secret: SECRET})
 app.https(options).io()
 app.use (err, req, res, next) ->
-	res.status(401).jsonp { message: 'You must login first' } if err.constructor.name == 'UnauthorizedError'
+  res.status(401).jsonp { message: 'You must login first' } if err.constructor.name == 'UnauthorizedError'
 
 #API Routes
 app.get '/api/v1/dummy', (req, res) ->
-	res.send 200
+  res.send 200
 
 app.post '/api/v1/workers/:id/addData', workersController.addData
 app.post '/api/v1/workers/:id/enable', workersController.enableToProcess
