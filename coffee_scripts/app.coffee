@@ -70,24 +70,23 @@ getWork = (task_id=null, callback) ->
   coll.find(
     {$where: "this.available_slices.length == 0 && this.enabled_to_process"}).count (err, _n) ->
       console.log "hay para reducir #{_n}"
-    if _n isnt 0
-      coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
-        _.random(_n - 1)).nextObject((err, item) ->
-          if err
-            console.error err
-            return
-          callback item, true
-        )
-
-    else
-      coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
-        coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(
+      if _n isnt 0
+        coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
           _.random(_n - 1)).nextObject((err, item) ->
             if err
               console.error err
               return
-            callback item, false
+            callback item, true
           )
+      else
+        coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
+          coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(
+            _.random(_n - 1)).nextObject((err, item) ->
+              if err
+                console.error err
+                return
+              callback item, false
+            )
 
 
 sendData = (work, reducing, res) ->

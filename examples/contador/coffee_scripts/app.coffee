@@ -88,7 +88,7 @@ get_slices = (data, size) ->
     i++ if (contador) % size == 0
   return arr
 
-send_data = (data, enable_to_process = false) ->
+send_data = (data, enable = false) ->
   # Divido los datos de un solo hash en un array de hashes de 50 elementos c/u
   slices = get_slices(data, 50)
   available_slices = []
@@ -115,7 +115,7 @@ send_data = (data, enable_to_process = false) ->
       assert.ifError error
       assert.equal response.statusCode, 200 # Si todo salio bien
 
-      if enable_to_process # Si ya se leyo la ultima linea
+      if enable # Si ya se leyo la ultima linea
         enable_to_process() # Habilito para procesar
       else
         lr.resume() # Sino resumo la lectura del archivo
