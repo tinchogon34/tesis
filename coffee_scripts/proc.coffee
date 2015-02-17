@@ -32,13 +32,13 @@ data = null
 get_work_interval = null
 get_work_running = false
 blob = null
-intervalId = null 
+intervalId = null
 pause = true
 
 
 class _Worker
   # Encapsula los detalles del Worker.
-  
+
   constructor: (code, task) ->
     ###
      Construye el worker y lo prepara para que empieze a ejecutarlo.
@@ -49,7 +49,7 @@ class _Worker
     @_task = task
     @worker = new Worker window.URL.createObjectURL new Blob [code],
       type: "text/javascript"
-    
+
     @worker.onmessage = (evnt) =>
       msg = evnt.data
       switch msg.type
@@ -62,7 +62,7 @@ class _Worker
         when "ready"
           console.log "Recibi ready"
           @_ready = true
-        
+
         else
           console.log "Unhandled msg #{msg}"
     console.log "Web worker construido."
@@ -100,7 +100,8 @@ class Task
         return
 
       try
-        console.log "init Task for " + if json.reducing then "Reducing" else "mapping"
+        console.log "init Task for " +
+          if json.reducing then "Reducing" else "mapping"
         @id = json.task_id
         @reducing = json.reducing
         @_worker = new _Worker json.code, @
@@ -117,15 +118,15 @@ class Task
   get_data: (callback=->) ->
     # Trae datos del server y se los entrega al worker para que trabaje
     $.getJSON(DATA_URL, {
-        task_id: @id
-        reducing: @reducing
-      }).done((json, textStatus, jqXHR) =>
-        console.log "GET /data trajo", json
-        @_prepare_data json
-        @_worker.feed @_data
+      task_id: @id
+      reducing: @reducing
+    }).done((json, textStatus, jqXHR) =>
+      console.log "GET /data trajo", json
+      @_prepare_data json
+      @_worker.feed @_data
 
-      ).fail (jqXHR, textStatus, errorThrown) ->
-        console.error "Cannot grab data from server"
+    ).fail (jqXHR, textStatus, errorThrown) ->
+      console.error "Cannot grab data from server"
 
   next: (data) ->
     # POSTea `data` al servir, pide mas datos y alimenta al worker.
@@ -141,12 +142,12 @@ class Task
 
   _prepare_result: (result) ->
     ###
-    Antes de enviarlo al server hay que dejar el `result` preparar para 
+    Antes de enviarlo al server hay que dejar el `result` preparar para
     aplicarle el `reduce`
     ###
     console.log "pre result", result
     @_result = {}
-    result.forEach (element) =>  
+    result.forEach (element) =>
       if element.length isnt 2
         console.error "Result mal formado en el worker", result
         return
@@ -186,19 +187,19 @@ process_response = (json) ->
       task_id = null
       wait_for_new_tasks()  unless get_work_running
       return
-  
+
     clearInterval get_work_interval
     get_work_running = false
     data = json.data
     slice_id = json.slice_id
-  
+
     if task_id isnt json.task_id
       worker.terminate()  if worker isnt null
       task_id = json.task_id
       worker_code = json.worker
       create_worker()
     start_worker()
-  
+
   catch err
     throw new Error "FATAL: #{err.message}"
 
