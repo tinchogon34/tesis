@@ -3,7 +3,7 @@
   archivo estático porque se le debe agregar las funciones map o reduce del
   investigador.
 
-  Realiza las llamadas a `map` o `reduce` teniendo en cuenta de no hacer un 
+  Realiza las llamadas a `map` o `reduce` teniendo en cuenta de no hacer un
   uso *intensivo* de los recursos del cliente.
 
   Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
@@ -32,10 +32,10 @@ self.emit = (key, val) ->
 
 class Cola
   ###
-  Realizar las llamadas a `map` o `reduce`. Se duerme `this.sleeping` ms y 
+  Realizar las llamadas a `map` o `reduce`. Se duerme `this.sleeping` ms y
   continua trabajando.
-  ###   
-  
+  ###
+
   constructor: () ->
     self.log "Creando Cola"
     @i = 0
@@ -64,16 +64,16 @@ class Cola
     self.log "@_process #{@executing} #{@sleeping}"
     if @executing or @sleeping
       return
-    
+
     @executing = true
     if @i < @_keys.length
       self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
       @fn @_keys[@i], @_data[@_keys[@i]]
       @i++
-    
+
     else  # termino de procesar.
       self.log "termino de procesar"
-      @_sendResult() 
+      @_sendResult()
 
     # Hay una ventana de tiempo entre cada llamada map.
     if not @sleeping
@@ -94,11 +94,11 @@ class Cola
       _result.push item.slice()
     ###
     self.log "_sendResult con ", result
-    
+
     postMessage
       type: "send_result"
       args: JSON.stringify result
-    
+
   setData: (data) ->
     self.log "setData"
     result = []
@@ -120,7 +120,7 @@ class Cola
 cola = new Cola()
 @onmessage = (evnt) ->
   # Comunicación con `proc.js`.
-  
+
   msg = evnt.data
   switch msg.type
     when "start"
@@ -132,14 +132,14 @@ cola = new Cola()
       self.log "start", msg.args
       cola.setData msg.args
       cola.wake()
-    
+
     when "pause"
       self.log "pause recv"
       cola.sleep()
 
     when "resume"
       self.log "resumign recv"
-      cola.wake()      
+      cola.wake()
 
 # Avisar que esta listo para ejecutar las tareas.
 @postMessage
