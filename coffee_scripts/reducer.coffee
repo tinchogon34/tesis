@@ -14,7 +14,8 @@ _ = require "underscore"
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
 MAPPED = "this.available_slices.length > 1 && this.enabled_to_process"
-REDUCING = "this.available_slices.length === 0 && this.reduce_results !== {} && this.enabled_to_process"
+REDUCING = "this.available_slices.length === 0 && " +
+  "this.reduce_results !== {} && this.enabled_to_process"
 
 
 mode = (array) ->
@@ -23,7 +24,7 @@ mode = (array) ->
   ###
   if array.length == 0
     return null
-  
+
    # transformo los obj en str y luego calculo su moda. Ese es el correcto
   _arr = []
   array.forEach (item) ->
@@ -41,7 +42,7 @@ mode = (array) ->
     if modeMap[el] > maxCount
       maxEl = el
       maxCount = modeMap[el]
-    
+
   JSON.parse maxEl
 
 
@@ -51,7 +52,7 @@ process = (task, coll) ->
 
   Debe buscar la moda de los resultados de map para cada slice, el cual se lo
   considera correcto. Luego une los resultados de los slices y los agrega en
-  `reduce_data`. Finalmente saca de `available_slices` los ya procesado. 
+  `reduce_data`. Finalmente saca de `available_slices` los ya procesado.
   ###
   results = task.map_results
   _real_result = {} # sid => result
@@ -63,7 +64,7 @@ process = (task, coll) ->
 
   # Busco los sids a eliminar de `available_slices`.
   _unavailable_sids = (parseInt sid for sid in Object.keys _real_result)
-  
+
   # Uno los `map_results` que tengan la misma llave.
   _data = {}
   for sid, reduce_data of _real_result
@@ -74,7 +75,7 @@ process = (task, coll) ->
   # Preparo los datos para ser reducidos.
   _reduce_data = {}
   for k, vals of _data
-    _reduce_data["reduce_data.#{k}"] = 
+    _reduce_data["reduce_data.#{k}"] =
       $each: vals
 
   # Elimino los `maps_result` ya procesados
@@ -83,13 +84,13 @@ process = (task, coll) ->
     _used_maps_results["map_results.#{sid}"] = ""
 
   # Preparo la consulta
-  _update = 
+  _update =
     $unset: _used_maps_results
     $push: _reduce_data
     $pull: {
       available_slices: {$in: _unavailable_sids}
     }
-  
+
   # Ejecuto la consulta
   coll.update {_id: task._id}, _update, (err, count, status) ->
     if err isnt null
@@ -103,7 +104,7 @@ process = (task, coll) ->
 
 reducing = (task, coll, conn) ->
   ###
-  Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se 
+  Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se
   termino la tarea. De ser asi, debe ser movido a otra colleccion.
   ###
   results = {}
@@ -119,7 +120,7 @@ reducing = (task, coll, conn) ->
     _unset["reduce_results.#{key}"] = ""
 
   # Preparo la consulta
-  _update = 
+  _update =
     $unset: _unset
     $set: results
 
@@ -128,7 +129,9 @@ reducing = (task, coll, conn) ->
     return console.error "ERROR: #{err}" if err isnt null
     console.log "INFO: Termino de reducir #{status}"
 
-  if _.difference(Object.keys(task.reduce_results), Object.keys(_real_result)).length is 0
+  if _.difference(
+    Object.keys(task.reduce_results),
+    Object.keys(_real_result)).length is 0
     console.log "termino"
     # TODO: mover el task a otra coleccion
     worker_results = conn.collection "worker_results"
@@ -148,18 +151,17 @@ MongoClient.connect DB_URL, (err, conn) ->
   coll.find({$where: MAPPED}).each (err, task) ->
     return console.error(err) if err isnt null
     if task is null
-      one = true 
+      one = true
       console.log "No hay tareas a mapear"
       return
-    
+
     console.log "Ha terminado de la fase *map* el task_id: ", task._id
     process task, coll
 
-  # Procesar task que estan siendo reducidas.  
+  # Procesar task que estan siendo reducidas.
   coll.find({$where: REDUCING}).each (err, task) ->
     return console.error(err) if err isnt null
     return two = true if task is null
-    
+
     console.log "Esta siendo reducida el task_id: ", task._id
     reducing task, coll, conn
-
