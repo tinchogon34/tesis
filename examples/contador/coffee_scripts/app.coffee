@@ -94,7 +94,7 @@ send_data = (data, enable = false) ->
   available_slices = []
 
   # Armo un array de slices disponibles con la cantidad de elementos que tengo
-  # en available_slices
+  # en slices
   available_slices[i] = (i+slices_count) for i in [0...slices.length]
 
   # Incremento la cantidad de slices que he enviado para poder ir armando

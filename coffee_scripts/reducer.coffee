@@ -4,19 +4,21 @@
   1) Termino la fase de map y debe empezar la de reduce.
   2) Durante la fase reduce. Adicionalmente detecta cuando termina y mueve la
   tarea a otra Colección.
+
 ###
 # dependencias
 MongoClient = require('mongodb').MongoClient
-sleep = require 'sleep'
 assert = require 'assert'
 _ = require "underscore"
-
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
 MAPPED = "this.available_slices.length > 1 && this.enabled_to_process"
 REDUCING = "this.available_slices.length === 0 && " +
   "this.reduce_results !== {} && this.enabled_to_process"
 
+# flags
+flag_mapper =  true
+flag_reducer = true
 
 mode = (array) ->
   ###
@@ -138,30 +140,49 @@ reducing = (task, coll, conn) ->
     worker_result =
       result: results
       user: task.user
-      worker: task._id
     worker_results.insert [worker_result], (err, result) ->
       assert.ifError err
+
+      coll.remove {_id: task._id}, (err, count) ->
+        assert.ifError err
 
 MongoClient.connect DB_URL, (err, conn) ->
   return console.log(err) if err isnt null
   console.log "Conección exitosa a la BD."
+  caller(conn)
+  
+
+proccesor = (conn) ->  
   coll = conn.collection "workers"
-
   # Preparar las task para que ejecuten el reduce
-  coll.find({$where: MAPPED}).each (err, task) ->
-    return console.error(err) if err isnt null
-    if task is null
-      one = true
-      console.log "No hay tareas a mapear"
-      return
+  if flag_mapper
+    flag_mapper =  false
+    coll.find({$where: MAPPED}).each (err, task) ->
+      return console.error(err) if err isnt null
+      if task is null
+        flag_mapper = true
+        console.log "No hay tareas a mapear"
+        return
 
-    console.log "Ha terminado de la fase *map* el task_id: ", task._id
-    process task, coll
+      process task, coll
+      console.log "Ha terminado de la fase *map* el task_id: ", task._id
+      
+  if flag_reducer 
+    flag_reducer = false
+    # Procesar task que estan siendo reducidas.
+    coll.find({$where: REDUCING}).each (err, task) ->
+      return console.error(err) if err isnt null
+      if task is null
+        flag_reducer = true
+        console.log "No hay tareas a reducir"
+        return
 
-  # Procesar task que estan siendo reducidas.
-  coll.find({$where: REDUCING}).each (err, task) ->
-    return console.error(err) if err isnt null
-    return two = true if task is null
-
-    console.log "Esta siendo reducida el task_id: ", task._id
-    reducing task, coll, conn
+      console.log "Esta siendo reducida el task_id: ", task._id
+      reducing task, coll, conn
+    
+    
+caller = (conn) ->
+  flags = flag_mapper or flag_reducer
+  if flags
+    proccesor(conn)
+  setTimeout(caller, 3000, conn)
