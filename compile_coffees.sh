@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #API Coffees
-rm api/app.js app/test.js api/models/*.js  api/controllers/*.js
+rm api/app.js api/test.js api/models/*.js  api/controllers/*.js
 coffee -o api/ api/coffee_scripts/app.coffee
 coffee -o api/ api/coffee_scripts/test.coffee
 coffee -o api/models/ -c api/models/*.coffee
