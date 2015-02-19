@@ -62,9 +62,7 @@ getWork = (task_id=null, callback) ->
       if _n isnt 0
         coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
           _.random(_n - 1)).nextObject((err, item) ->
-            if err
-              console.error err
-              return
+            assert.ifError err
             callback item, true
           )
       else
@@ -177,37 +175,6 @@ app.post '/data', (req, res) ->
   # Devuelve mas datos
   getWork task_id, (work) ->
     sendData(work, reducing, res)
-
-
-# remove?
-app.post '/form', (req, res) ->
-  # Investigator post a new JOBS to distribute.
-  console.log(req.body)
-  data = JSON.parse req.body.data.replace(/'/g,"\"")
-  map = req.body.map
-  reduce = req.body.reduce
-
-  # DO CHECKS
-
-  doc =
-    data: data
-    worker_code: "investigador_map = " + map
-    reduce: reduce
-    map_results: {}
-    reduce_results: {}
-    slices: get_slices(data, 3)
-    current_slice: -1
-    status: 'created'
-    received_count: 0
-    send_count: 0
-
-  db.collection 'workers', (err, collection) ->
-    assert.ifError err
-    collection.insert doc, {w: 1}, (err, result) ->
-      assert.ifError err
-      assert.ok result
-
-    res.send "Thx for submitting a job"
 
 console.log "listening to localhost:3000"
 app.listen '3000'
