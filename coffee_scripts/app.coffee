@@ -35,17 +35,6 @@ app.use bodyParser.urlencoded extended: true
 app.use compression()
 app.use allowCrossDomain
 
-# remove?
-shuffle = (h) ->
-  keys = Object.keys(h)
-  size = keys.length
-  for i in [0..size-1] # For each key
-    randomKeyI = keys[i]
-    j = Math.floor(Math.random() * size) # Pick random key
-    randomKeyJ = keys[j]
-    [h[randomKeyI], h[randomKeyJ]] = [h[randomKeyJ], h[randomKeyI]] # Do swap
-  return h
-
 
 getWork = (task_id=null, callback) ->
   ###
