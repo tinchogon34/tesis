@@ -117,6 +117,11 @@ reducing = (task, coll, conn) ->
       _real_result[key] = mode res
       results["results.#{key}"] = _real_result[key]
 
+  if Object.keys(results).length is 0
+    console.log "nada que reducir"
+    return
+
+
   for key in Object.keys _real_result
     _unset["reduce_results.#{key}"] = ""
 
