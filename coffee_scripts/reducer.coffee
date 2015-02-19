@@ -12,7 +12,7 @@ assert = require 'assert'
 _ = require "underscore"
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
-MAPPED = "this.available_slices.length > 1 && this.enabled_to_process"
+MAPPED = "this.available_slices.length > 0 && this.enabled_to_process"
 REDUCING = "this.available_slices.length === 0 && " +
   "this.reduce_results !== {} && this.enabled_to_process"
 
