@@ -15,11 +15,11 @@ exports.findById = (req, res) ->
 #POST - Inserta un nuevo worker en la DB
 exports.addWorker = (req, res) ->
   worker = new Worker(
-    data: req.body.data
+    #data: req.body.data
     imap: "investigador_map = " + req.body.imap
     ireduce: "investigador_reduce = " + req.body.ireduce
-    available_slices: req.body.available_slices
-    slices: req.body.slices
+    available_slices: req.body.available_slices or []
+    slices: req.body.slices or []
     user: req.user._id
     enabled_to_process: false
   )
@@ -50,9 +50,9 @@ exports.addData = (req, res) ->
     return res.send 404 unless worker # 404 si no existe el worker
     # Unauthorized si no es el propietario del worker
     return res.status(401).jsonp { message: "Not your worker"} unless mongoose.Types.ObjectId(req.user._id).equals(worker.user)
-    worker.data = worker.data || {}
-    for attrname of req.body.data
-      worker.data[attrname] = req.body.data[attrname]
+    #worker.data = worker.data || {}
+    #for attrname of req.body.data
+    #  worker.data[attrname] = req.body.data[attrname]
     worker.available_slices = worker.available_slices.concat req.body.available_slices
     worker.slices = worker.slices.concat req.body.slices
     worker.save (err) ->

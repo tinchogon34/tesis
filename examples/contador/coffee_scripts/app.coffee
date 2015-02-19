@@ -25,7 +25,7 @@ lr.pause() # Pausa la lectura del archivo
 
 lr.on 'line', (line)->
   hash[index] = line # { 0: linea1, 1: linea2, .....}
-  if (index+1) % 100 == 0 # Si ya lei 100 lineas...
+  if (index+1) % 6 == 0 # Si ya lei 100 lineas...
     lr.pause() # Pauso la lectura del archivo
     send_data hash # Mando los datos
     hash = {} # Limpio el hash para los proximos 100
@@ -90,7 +90,7 @@ get_slices = (data, size) ->
 
 send_data = (data, enable = false) ->
   # Divido los datos de un solo hash en un array de hashes de 50 elementos c/u
-  slices = get_slices(data, 50)
+  slices = get_slices(data, 3)
   available_slices = []
 
   # Armo un array de slices disponibles con la cantidad de elementos que tengo
@@ -104,7 +104,6 @@ send_data = (data, enable = false) ->
   
   # Armo del objeto que voy a postear a la db con los nuevos datos del worker
   json =
-    data: data
     available_slices: available_slices
     slices: slices
 

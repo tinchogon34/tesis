@@ -5,20 +5,35 @@
   exports = module.exports = function(app, mongoose) {
     var workerSchema;
     workerSchema = new mongoose.Schema({
-      data: mongoose.Schema.Types.Mixed,
       imap: String,
       ireduce: String,
-      map_results: mongoose.Schema.Types.Mixed,
-      reduce_data: mongoose.Schema.Types.Mixed,
-      reduce_results: mongoose.Schema.Types.Mixed,
-      result: mongoose.Schema.Types.Mixed,
-      available_slices: [Number],
-      slices: [mongoose.Schema.Types.Mixed],
+      map_results: {
+        type: mongoose.Schema.Types.Mixed,
+        "default": {}
+      },
+      reduce_data: {
+        type: mongoose.Schema.Types.Mixed,
+        "default": {}
+      },
+      reduce_results: {
+        type: mongoose.Schema.Types.Mixed,
+        "default": {}
+      },
+      available_slices: {
+        type: [Number],
+        "default": []
+      },
+      slices: {
+        type: [mongoose.Schema.Types.Mixed],
+        "default": []
+      },
       user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
       },
       enabled_to_process: Boolean
+    }, {
+      minimize: false
     });
     return mongoose.model('Worker', workerSchema);
   };
