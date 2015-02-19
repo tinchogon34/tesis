@@ -176,7 +176,6 @@ proccesor = (conn) ->
       assert.ifError err
       if task is null
         flag_reducer = true
-        console.log "No hay tareas a reducir"
         return
 
       console.log "Esta siendo reducida el task_id: ", task._id
