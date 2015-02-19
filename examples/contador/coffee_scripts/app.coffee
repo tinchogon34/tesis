@@ -25,7 +25,7 @@ lr.pause() # Pausa la lectura del archivo
 
 lr.on 'line', (line)->
   hash[index] = line # { 0: linea1, 1: linea2, .....}
-  if (index+1) % 6 == 0 # Si ya lei 100 lineas...
+  if (index+1) % 6 == 0 # Si ya lei 6 lineas...
     lr.pause() # Pauso la lectura del archivo
     send_data hash # Mando los datos
     hash = {} # Limpio el hash para los proximos 100
