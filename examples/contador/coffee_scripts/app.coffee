@@ -25,7 +25,7 @@ lr.pause() # Pausa la lectura del archivo
 
 lr.on 'line', (line)->
   hash[index] = line # { 0: linea1, 1: linea2, .....}
-  if (index+1) % 6 == 0 # Si ya lei 100 lineas...
+  if (index+1) % 6 == 0 # Si ya lei 6 lineas...
     lr.pause() # Pauso la lectura del archivo
     send_data hash # Mando los datos
     hash = {} # Limpio el hash para los proximos 100
@@ -40,6 +40,7 @@ lr.on 'end', -> # Si termine de leer el archivo
 newWorker =
   imap: 'function (k, v) {
     var countWords = function(s){
+    if(s == ""){return 0;}
     s = s.replace(/(^\s*)|(\s*$)/gi,"");
     s = s.replace(/[ ]{2,}/gi," ");
     s = s.replace(/\\n /,"\\n");

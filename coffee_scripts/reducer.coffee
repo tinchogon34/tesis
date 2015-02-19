@@ -142,7 +142,7 @@ reducing = (task, coll, conn) ->
     # TODO: mover el task a otra coleccion
     worker_results = conn.collection "worker_results"
     worker_result =
-      result: results
+      result: _real_result
       user: task.user
     worker_results.insert [worker_result], (err, result) ->
       assert.ifError err
