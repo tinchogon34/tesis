@@ -141,12 +141,17 @@ app.post '/data', (req, res) ->
   que el cliente siga con la siguiente tarea.
   ###
 
-  console.log "Posting to /data", req.param("result")
   if undefined in [req.body.task_id, req.body.result, req.body.reducing]
     return res.status(400).send "Missing argument(s)"
 
   reducing = req.body.reducing
   task_id = req.param "task_id"
+
+  console.log "Posting to /data", req.param("result")
+  if reducing
+    console.log "Reducindo"
+  else
+    console.log "mapeando"
 
   # Prepara el obj para actulizar a DB
   if reducing
