@@ -58,12 +58,16 @@ process = (task, coll) ->
   ###
   results = task.map_results
   _real_result = {} # sid => result
+  console.log("mapeando el taks #{task._id}."
+    "Available_slices=#{task.available_slices.length}")
 
   # Obtengo la moda de los `maps_results` que tengan mas de 5 valores.
   for sid, res of results
     if res.length >= 5
       _real_result[sid] = mode res
 
+  if Object.keys(_real_result) is 0
+    return console.log("Nada que hacer.")
   # Busco los sids a eliminar de `available_slices`.
   _unavailable_sids = (parseInt sid for sid in Object.keys _real_result)
 
@@ -95,13 +99,8 @@ process = (task, coll) ->
 
   # Ejecuto la consulta
   coll.update {_id: task._id}, _update, (err, count, status) ->
-    if err isnt null
-      console.error "ERROR: #{err}"
-    else
-      if count isnt 1
-        console.error "WARNING: It should update 1 record but #{count} where
-          updated"
-      console.log "INFO: #{status}"
+    assert.ifError err
+    assert.strictEqual count, 1, "updated record #{count} != 1"
 
 
 reducing = (task, coll, conn) ->
@@ -128,8 +127,8 @@ reducing = (task, coll, conn) ->
 
   # Ejecuto la consulta
   coll.update {_id: task._id}, _update, (err, count, status) ->
-    return console.error "ERROR: #{err}" if err isnt null
-    console.log "INFO: Termino de reducir #{status}"
+    assert.ifError err
+    assert.strictEqual count, 1, "updated record #{count} != 1"
 
   if _.difference(
     Object.keys(task.reduce_results),
@@ -147,31 +146,29 @@ reducing = (task, coll, conn) ->
         assert.ifError err
 
 MongoClient.connect DB_URL, (err, conn) ->
-  return console.log(err) if err isnt null
+  assert.ifError err
   console.log "Conección exitosa a la BD."
   caller(conn)
-  
 
-proccesor = (conn) ->  
+
+proccesor = (conn) ->
   coll = conn.collection "workers"
   # Preparar las task para que ejecuten el reduce
   if flag_mapper
     flag_mapper =  false
     coll.find({$where: MAPPED}).each (err, task) ->
-      return console.error(err) if err isnt null
+      assert.ifError err
       if task is null
         flag_mapper = true
-        console.log "No hay tareas a mapear"
         return
 
       process task, coll
-      console.log "Ha terminado de la fase *map* el task_id: ", task._id
-      
-  if flag_reducer 
+
+  if flag_reducer
     flag_reducer = false
     # Procesar task que estan siendo reducidas.
     coll.find({$where: REDUCING}).each (err, task) ->
-      return console.error(err) if err isnt null
+      assert.ifError err
       if task is null
         flag_reducer = true
         console.log "No hay tareas a reducir"
@@ -179,8 +176,8 @@ proccesor = (conn) ->
 
       console.log "Esta siendo reducida el task_id: ", task._id
       reducing task, coll, conn
-    
-    
+
+
 caller = (conn) ->
   flags = flag_mapper or flag_reducer
   if flags
