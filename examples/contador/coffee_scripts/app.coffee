@@ -40,6 +40,7 @@ lr.on 'end', -> # Si termine de leer el archivo
 newWorker =
   imap: 'function (k, v) {
     var countWords = function(s){
+    if(s == ""){return 0;}
     s = s.replace(/(^\s*)|(\s*$)/gi,"");
     s = s.replace(/[ ]{2,}/gi," ");
     s = s.replace(/\\n /,"\\n");
