@@ -1,4 +1,5 @@
-express = require 'express.io'
+express = require 'express'
+https = require('https');
 bodyParser = require 'body-parser'
 morgan  = require 'morgan'
 assert = require 'assert'
@@ -37,9 +38,10 @@ app.use morgan 'default'
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: true
 app.use '/api', expressjwt({secret: SECRET})
-app.https(options).io()
 app.use (err, req, res, next) ->
   res.status(401).jsonp { message: 'You must login first' } if err.constructor.name == 'UnauthorizedError'
+
+httpsServer = https.createServer(options, app)
 
 #API Routes
 app.get '/api/v1/dummy', (req, res) ->
@@ -55,4 +57,4 @@ app.get '/api/v1/worker_results/:id', workerResultsController.getResult
 
 app.post '/login', usersController.loginWithCredentials
 
-app.listen '8080'
+httpsServer.listen '8080'
