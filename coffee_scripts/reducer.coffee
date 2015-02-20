@@ -10,21 +10,42 @@
 MongoClient = require('mongodb').MongoClient
 assert = require 'assert'
 _ = require "underscore"
+fs = require "fs"
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
 MAPPED = "this.available_slices.length > 0 && this.enabled_to_process"
-REDUCING = "this.available_slices.length === 0 && " +
-  "this.reduce_results !== {} && this.enabled_to_process"
+REDUCING = "this.available_slices.length === 0 && this.enabled_to_process"
+LOCK_PATH = "/var/tmp/.tesis.lock"
 
 # flags
 flag_mapper =  true
 flag_reducer = true
-CONN = null
+
+# check if there is an other process
+try
+  fs.openSync LOCK_PATH, "r"
+  console.log "Ya existe un proceso corriendo el `reducer`."
+  console.log "Si esta seguro que no es asi, $ rm #{LOCK_PATH}"
+  process.exit -1
+
+catch Error
+  # Doesnt exists? OK (y)
+  fd = fs.openSync LOCK_PATH, "w"
+  fs.writeSync fd, "foobar"
+  fs.closeSync fd
+
 
 MongoClient.connect DB_URL, (err, conn) ->
   assert.ifError err
   console.log "Conección exitosa a la BD."
-  CONN = conn
+
+  # close connection when SIGINTerrupted
+  process.on 'SIGINT', (err) ->
+    conn.close()
+    fs.unlink LOCK_PATH
+    console.log "Goodbye ;)"
+    process.exit 0
+
   caller(conn)
 
 
@@ -32,10 +53,9 @@ mode = (array) ->
   ###
   Devuelve la moda de un arreglo de cadenas.
   ###
-  if array.length == 0
-    return null
 
-   # transformo los obj en str y luego calculo su moda. Ese es el correcto
+  assert.notStrictEqual array.length, 0
+  # transformo los obj en str y luego calculo su moda. Ese es el correcto
   _arr = []
   array.forEach (item) ->
     _arr.push JSON.stringify item
@@ -64,10 +84,9 @@ mapping = (task, coll) ->
   considera correcto. Luego une los resultados de los slices y los agrega en
   `reduce_data`. Finalmente saca de `available_slices` los ya procesado.
   ###
+
   results = task.map_results
   _real_result = {} # sid => result
-  console.log("mapeando el taks #{task._id}."
-    "Available_slices=#{task.available_slices.length}")
 
   # Obtengo la moda de los `maps_results` que tengan mas de 5 valores.
   for sid, res of results
@@ -75,7 +94,11 @@ mapping = (task, coll) ->
       _real_result[sid] = mode res
 
   if Object.keys(_real_result).length is 0
-    return console.log("Nada que hacer.")
+    return
+
+  console.log("mapeando el taks #{task._id}."
+    "Available_slices=#{task.available_slices.length}")
+
   # Busco los sids a eliminar de `available_slices`.
   _unavailable_sids = (parseInt sid for sid in Object.keys _real_result)
 
@@ -114,8 +137,9 @@ mapping = (task, coll) ->
 reducing = (task, coll, conn) ->
   ###
   Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se
-  termino la tarea. De ser asi, debe ser movido a otra colleccion.
+  termino la tarea. De ser asi, es movido a `worker_results`.
   ###
+
   results = {}
   _real_result = {}
   _unset = {}
@@ -126,9 +150,9 @@ reducing = (task, coll, conn) ->
       results["results.#{key}"] = _real_result[key]
 
   if Object.keys(results).length is 0
-    console.log "nada que reducir"
     return
 
+  console.log "Esta siendo reducida el task_id: #{task._id}"
 
   for key in Object.keys _real_result
     _unset["reduce_results.#{key}"] = ""
@@ -146,8 +170,8 @@ reducing = (task, coll, conn) ->
   if _.difference(
     Object.keys(task.reduce_results),
     Object.keys(_real_result)).length is 0
-    console.log "termino"
-    # TODO: mover el task a otra coleccion
+    console.log "termino completamen el task #{task._id}"
+
     worker_results = conn.collection "worker_results"
     worker_result =
       result: _real_result
@@ -158,7 +182,12 @@ reducing = (task, coll, conn) ->
       coll.remove {_id: task._id}, (err, count) ->
         assert.ifError err
 
+
 proccesor = (conn) ->
+  ###
+  Reduce o mapea las task de la bd, seteando correctamente los flags.
+  ###
+
   coll = conn.collection "workers"
   # Preparar las task para que ejecuten el reduce
   if flag_mapper
@@ -180,18 +209,16 @@ proccesor = (conn) ->
         flag_reducer = true
         return
 
-      console.log "Esta siendo reducida el task_id: ", task._id
       reducing task, coll, conn
 
 
 caller = (conn) ->
+  ###
+  Verifica que todas las tareas de `proccesor` terminen. Si lo estan, lo
+  ejecuta de vuelta, si no se duerme.
+  ###
+
   flags = flag_mapper or flag_reducer
   if flags
     proccesor(conn)
   setTimeout(caller, 3000, conn)
-
-
-process.on 'SIGINT', (err) ->
-  CONN.close()
-  console.log "Goodbye ;)"
-  process.exit 0
