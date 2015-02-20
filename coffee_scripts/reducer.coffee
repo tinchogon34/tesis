@@ -74,7 +74,7 @@ mapping = (task, coll) ->
     if res.length >= 5
       _real_result[sid] = mode res
 
-  if Object.keys(_real_result) is 0
+  if Object.keys(_real_result).length is 0
     return console.log("Nada que hacer.")
   # Busco los sids a eliminar de `available_slices`.
   _unavailable_sids = (parseInt sid for sid in Object.keys _real_result)
