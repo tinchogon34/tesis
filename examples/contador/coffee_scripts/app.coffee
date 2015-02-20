@@ -41,9 +41,9 @@ newWorker =
   imap: 'function (k, v) {
     var countWords = function(s){
     if(s == ""){return 0;}
+    s = s.replace(/\\n/," ");
     s = s.replace(/(^\s*)|(\s*$)/gi,"");
     s = s.replace(/[ ]{2,}/gi," ");
-    s = s.replace(/\\n /,"\\n");
     return s.split(" ").length;};
     self.log("inv in");
     self.emit("llave", countWords(v));
