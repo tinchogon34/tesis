@@ -54,26 +54,22 @@ getWork = (task_id=null, callback) ->
   Elije uno aleatoriamente.
   Si hay un Task listo para reducir tiene mayor prioridad.
   ###
-  coll.find(
-    {$where: "this.available_slices.length == 0 && this.enabled_to_process"}).count (err, _n) ->
-      assert.ifError err
-
-      if _n isnt 0
-        coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
-          _.random(_n - 1)).nextObject((err, item) ->
-            assert.ifError err
-            callback item, true
-          )
-      else
-        coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
-          if _n is 0
-            return callback null
+  coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process"}).count (err, _n) ->
+    assert.ifError err
+    if _n isnt 0
+      coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
+        assert.ifError err
+        callback item, true
+      )
+    else
+      coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
+        assert.ifError err
+        if _n is 0
+          return callback null
+        coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
           assert.ifError err
-          coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(
-            _.random(_n - 1)).nextObject((err, item) ->
-              assert.ifError err
-              callback item, false
-            )
+          callback item, false
+        )
 
 
 sendData = (work, reducing, res) ->
