@@ -58,7 +58,6 @@ getWork = (task_id=null, callback) ->
     {$where: "this.available_slices.length == 0 && this.enabled_to_process"}).count (err, _n) ->
       assert.ifError err
 
-      console.log "hay para reducir #{_n}"
       if _n isnt 0
         coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
           _.random(_n - 1)).nextObject((err, item) ->
@@ -67,6 +66,8 @@ getWork = (task_id=null, callback) ->
           )
       else
         coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
+          if _n is 0
+            return callback null
           assert.ifError err
           coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(
             _.random(_n - 1)).nextObject((err, item) ->

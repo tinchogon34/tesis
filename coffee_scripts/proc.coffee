@@ -95,8 +95,8 @@ class Task
     ###
     Termino de procesar. Agrdece y cerra todo.
     ###
-
-    @_worker.worker.terminate()
+    if @_worker
+      @_worker.worker.terminate()
     console.log "Gracias por procesar. Ya no tenemos nada mas que hacer ;)"
 
   get_data: (callback=->) ->
@@ -157,7 +157,9 @@ class Task
       @_prepare_data json
       @_worker.feed @_data
 
-    ).fail (jqXHR, textStatus, errorThrown) ->
+    ).fail (jqXHR, textStatus, errorThrown) =>
+      if @reducing
+         return @_finish()
       console.error "Cannot POST result to server #{textStatus}"
       console.error jqXHR
 
