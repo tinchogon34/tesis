@@ -19,6 +19,14 @@ REDUCING = "this.available_slices.length === 0 && " +
 # flags
 flag_mapper =  true
 flag_reducer = true
+CONN = null
+
+MongoClient.connect DB_URL, (err, conn) ->
+  assert.ifError err
+  console.log "Conección exitosa a la BD."
+  CONN = conn
+  caller(conn)
+
 
 mode = (array) ->
   ###
@@ -48,7 +56,7 @@ mode = (array) ->
   JSON.parse maxEl
 
 
-process = (task, coll) ->
+mapping = (task, coll) ->
   ###
   Prepara task para ser reducido.
 
@@ -150,12 +158,6 @@ reducing = (task, coll, conn) ->
       coll.remove {_id: task._id}, (err, count) ->
         assert.ifError err
 
-MongoClient.connect DB_URL, (err, conn) ->
-  assert.ifError err
-  console.log "Conección exitosa a la BD."
-  caller(conn)
-
-
 proccesor = (conn) ->
   coll = conn.collection "workers"
   # Preparar las task para que ejecuten el reduce
@@ -167,7 +169,7 @@ proccesor = (conn) ->
         flag_mapper = true
         return
 
-      process task, coll
+      mapping task, coll
 
   if flag_reducer
     flag_reducer = false
@@ -187,3 +189,9 @@ caller = (conn) ->
   if flags
     proccesor(conn)
   setTimeout(caller, 3000, conn)
+
+
+process.on 'SIGINT', (err) ->
+  CONN.close()
+  console.log "Goodbye ;)"
+  process.exit 0
