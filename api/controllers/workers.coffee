@@ -46,7 +46,7 @@ exports.deleteWorker = (req, res) ->
 #POST - Agrega datos al worker con el ID especificado
 exports.addData = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
-    return res.send(500, err.message) if err
+    return res.status(500).jsonp { message: err.message } if err
     return res.send 404 unless worker # 404 si no existe el worker
     # Unauthorized si no es el propietario del worker
     return res.status(401).jsonp { message: "Not your worker"} unless mongoose.Types.ObjectId(req.user._id).equals(worker.user)
@@ -56,7 +56,7 @@ exports.addData = (req, res) ->
     worker.available_slices = worker.available_slices.concat req.body.available_slices
     worker.slices = worker.slices.concat req.body.slices
     worker.save (err) ->
-      return res.send(500, err.message) if err
+      return res.status(500).jsonp { message: err.message } if err
       res.status(200).jsonp worker
       return
     return
@@ -65,13 +65,13 @@ exports.addData = (req, res) ->
 #POST - Actualiza el worker con el ID especificado para que pueda ser procesado
 exports.enableToProcess = (req, res) ->
   Worker.findById req.params.id, (err, worker) ->
-    return res.send(500, err.message) if err
+    return res.status(500).jsonp { message: err.message } if err
     return res.send 404 unless worker # 404 si no existe el worker
     # Unauthorized si no es el propietario del worker
     return res.status(401).jsonp { message: "Not your worker"} unless mongoose.Types.ObjectId(req.user._id).equals(worker.user)
     worker.enabled_to_process = true
     worker.save (err) ->
-      return res.send(500, err.message) if err
+      return res.status(500).jsonp { message: err.message } if err
       res.status(200).jsonp worker
       return
     return

@@ -13,38 +13,22 @@ file = './text'
 lr = new LineByLineReader(file)
 index = 0
 hash = {}
-
+numLines = 0
 # Guarda el token que se devuelve cuando se logea con las credenciales
 # correctas, luego es el que se utiliza para hacer los requests
 token = null
-
 createdWorker = null
 slices_count = 0
-
-lr.pause() # Pausa la lectura del archivo
-
-lr.on 'line', (line)->
-  hash[index] = line # { 0: linea1, 1: linea2, .....}
-  if (index+1) % 5 == 0 # Si ya lei 6 lineas...
-    lr.pause() # Pauso la lectura del archivo
-    send_data hash # Mando los datos
-    hash = {} # Limpio el hash para los proximos 100
-  index++
-lr.on 'end', -> # Si termine de leer el archivo
-  if Object.keys(hash).length > 0 # Si quedaron datos en el hash
-    send_data hash, true  # Los envio y despues habilito para procesar
-  else
-    enable_to_process() # Sino solo habilito para procesar
 
 # El worker con la estructura basica, funcion map y reduce solamente
 newWorker =
   imap: 'function (k, v) {
     var countWords = function(s){
-    if(s == ""){return 0;}
-    s = s.replace(/\\n/," ");
-    s = s.replace(/(^\s*)|(\s*$)/gi,"");
-    s = s.replace(/[ ]{2,}/gi," ");
-    return s.split(" ").length;};
+      if(s == ""){ return 0; }
+      s = s.replace(/^\s+|\s+$/g, "");
+      s = s.replace(/[\'";:,.?¿\\-!¡\\n\\r\\t\\f]+/g, "");
+      return s.split(" ").length;
+    };
     self.log("inv in");
     self.emit("llave", countWords(v));
     self.log("inv in out");};'
@@ -57,21 +41,6 @@ newWorker =
 loginCredentials =
   username: 'investigador'
   password: 'investigador'
-
-# Me logeo con las credenciales
-request.post login_url, { json: loginCredentials }, (error, response, body) ->
-  assert.ifError error
-  assert.equal response.statusCode, 200 # Si todo salio bien
-  token = body.token # Guardo el bearer token que se me devolvio
-
-  # Creo el worker definido anteriormente
-  request.post(workers_url, {json: newWorker}, (error, response, worker) ->
-    assert.ifError error
-    assert.equal response.statusCode, 200 # Si todo salio bien
-
-    createdWorker = worker # Guardo el worker creado
-    lr.resume() # Resumo la lectura del archivo
-  ).auth null, null, true, token
 
 get_slices = (data, size) ->
   # {0: ..., 1: ...., 2: ..., 3: ...., 4: ....}
@@ -129,3 +98,42 @@ enable_to_process = ->
       assert.ifError error
       assert.equal response.statusCode, 200
   ).auth null, null, true, token
+
+lr.pause()
+lr.on 'line', (line)->
+  hash[index] = line # { 0: linea1, 1: linea2, .....}
+  if (index+1) % 5 == 0  # Si ya lei 6 lineas...
+    lr.pause() # Pauso la lectura del archivo
+    if index == numLines
+      send_data hash, true # Mando los datos
+    else
+      send_data hash
+    hash = {} # Limpio el hash para los proximos 100
+  else if index == numLines
+    if Object.keys(hash).length > 0
+      send_data hash, true
+    else
+      enable_to_process()
+  index++
+
+fs.createReadStream(file).on('data', (chunk) ->
+  numLines += chunk.toString('utf8').split(/\r\n|[\n\r\u0085\u2028\u2029]/g).length - 1
+  return).on('end', ->
+    # Me logeo con las credenciales
+    request.post login_url, { json: loginCredentials }, (error, response, body) ->
+      assert.ifError error
+      assert.equal response.statusCode, 200 # Si todo salio bien
+      token = body.token # Guardo el bearer token que se me devolvio
+
+      # Creo el worker definido anteriormente
+      request.post(workers_url, {json: newWorker}, (error, response, worker) ->
+        assert.ifError error
+        assert.equal response.statusCode, 200 # Si todo salio bien
+
+        createdWorker = worker # Guardo el worker creado
+        lr.resume()
+      ).auth null, null, true, token    
+)
+
+
+
