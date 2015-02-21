@@ -15,6 +15,7 @@ coffee -o . coffee_scripts/worker.coffee
 coffee -o public/ coffee_scripts/proc.coffee
 
 #EXAMPLES coffees
-rm examples/hash_crack/app.js examples/contador/app.js
+rm examples/hash_crack/app.js examples/contador/app.js examples/contador/testwordcount.js
 coffee -o examples/hash_crack/ examples/hash_crack/coffee_scripts/app.coffee
 coffee -o examples/contador/ examples/contador/coffee_scripts/app.coffee
+coffee -o examples/contador/ examples/contador/coffee_scripts/testwordcount.coffee
