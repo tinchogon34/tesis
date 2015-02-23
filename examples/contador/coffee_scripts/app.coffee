@@ -7,8 +7,8 @@ assert = require 'assert'
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 login_url = 'https://localhost:8080/login'
-workers_url = 'https://localhost:8080/api/v1/workers'
-worker_results_url = 'https://localhost:8080/api/v1/worker_results'
+tasks_url = 'https://localhost:8080/api/v1/tasks'
+task_results_url = 'https://localhost:8080/api/v1/task_results'
 file = './text'
 lr = new LineByLineReader(file)
 index = 0
@@ -17,11 +17,11 @@ numLines = 0
 # Guarda el token que se devuelve cuando se logea con las credenciales
 # correctas, luego es el que se utiliza para hacer los requests
 token = null
-createdWorker = null
+createdTask = null
 slices_count = 0
 
-# El worker con la estructura basica, funcion map y reduce solamente
-newWorker =
+# El task con la estructura basica, funcion map y reduce solamente
+newTask =
   imap: 'function (k, v) {
     var countWords = function(s){
       if(s == ""){ return 0; }
@@ -72,15 +72,15 @@ send_data = (data, enable = false) ->
   # indice 0
   slices_count += slices.length
   
-  # Armo del objeto que voy a postear a la db con los nuevos datos del worker
+  # Armo del objeto que voy a postear a la db con los nuevos datos del task
   json =
     available_slices: available_slices
     slices: slices
 
-  # Agrego los datos al worker
-  request.post(workers_url+'/'+createdWorker._id+'/addData',
+  # Agrego los datos al task
+  request.post(tasks_url+'/'+createdTask._id+'/addData',
     {json: json},
-    (error, response, updatedWorker) ->
+    (error, response, updatedTask) ->
       assert.ifError error
       assert.equal response.statusCode, 200 # Si todo salio bien
 
@@ -90,11 +90,11 @@ send_data = (data, enable = false) ->
         lr.resume() # Sino resumo la lectura del archivo
   ).auth null, null, true, token
 
-# Habilito el worker para que sea procesado
+# Habilito el task para que sea procesado
 enable_to_process = ->
-  request.post(workers_url+'/'+createdWorker._id+'/enable',
+  request.post(tasks_url+'/'+createdTask._id+'/enable',
     {json: true},
-    (error, response, updatedWorker) ->
+    (error, response, updatedTask) ->
       assert.ifError error
       assert.equal response.statusCode, 200
   ).auth null, null, true, token
@@ -125,12 +125,12 @@ fs.createReadStream(file).on('data', (chunk) ->
       assert.equal response.statusCode, 200 # Si todo salio bien
       token = body.token # Guardo el bearer token que se me devolvio
 
-      # Creo el worker definido anteriormente
-      request.post(workers_url, {json: newWorker}, (error, response, worker) ->
+      # Creo el task definido anteriormente
+      request.post(tasks_url, {json: newTask}, (error, response, task) ->
         assert.ifError error
         assert.equal response.statusCode, 200 # Si todo salio bien
 
-        createdWorker = worker # Guardo el worker creado
+        createdTask = task # Guardo el task creado
         lr.resume()
       ).auth null, null, true, token    
 )

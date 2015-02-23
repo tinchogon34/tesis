@@ -26,11 +26,11 @@ mongoose.connect db_url, (err, connection) ->
   assert.ifError err
 
 #Import models and controllers
-workerModel = require('./models/worker')(app, mongoose)
+taskModel = require('./models/task')(app, mongoose)
 userModel = require('./models/user')(app, mongoose)
-workerResultModel = require('./models/worker_result')(app, mongoose)
-workersController = require('./controllers/workers')
-workerResultsController = require('./controllers/workerResults')
+taskResultModel = require('./models/task_result')(app, mongoose)
+tasksController = require('./controllers/tasks')
+taskResultsController = require('./controllers/taskResults')
 usersController = require('./controllers/users')
 
 # SET MIDDLEWARE
@@ -47,13 +47,13 @@ httpsServer = https.createServer(options, app)
 app.get '/api/v1/dummy', (req, res) ->
   res.send 200
 
-app.post '/api/v1/workers/:id/addData', workersController.addData
-app.post '/api/v1/workers/:id/enable', workersController.enableToProcess
-app.get '/api/v1/workers/:id', workersController.findById
-app.delete '/api/v1/workers/:id', workersController.deleteWorker
-app.post '/api/v1/workers', workersController.addWorker
+app.post '/api/v1/tasks/:id/addData', tasksController.addData
+app.post '/api/v1/tasks/:id/enable', tasksController.enableToProcess
+app.get '/api/v1/tasks/:id', tasksController.findById
+app.delete '/api/v1/tasks/:id', tasksController.deleteTask
+app.post '/api/v1/tasks', tasksController.addTask
 
-app.get '/api/v1/worker_results/:id', workerResultsController.getResult
+app.get '/api/v1/task_results/:id', taskResultsController.getResult
 
 app.post '/login', usersController.loginWithCredentials
 
