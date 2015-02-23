@@ -137,7 +137,7 @@ mapping = (task, coll) ->
 reducing = (task, coll, conn) ->
   ###
   Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se
-  termino la tarea. De ser asi, es movido a `worker_results`.
+  termino la tarea. De ser asi, es movido a `task_results`.
   ###
 
   results = {}
@@ -172,11 +172,11 @@ reducing = (task, coll, conn) ->
     Object.keys(_real_result)).length is 0
     console.log "termino completamen el task #{task._id}"
 
-    worker_results = conn.collection "worker_results"
-    worker_result =
+    task_results = conn.collection "task_results"
+    task_result =
       result: _real_result
       user: task.user
-    worker_results.insert [worker_result], (err, result) ->
+    task_results.insert [task_result], (err, result) ->
       assert.ifError err
 
       coll.remove {_id: task._id}, (err, count) ->
@@ -188,7 +188,7 @@ proccesor = (conn) ->
   Reduce o mapea las task de la bd, seteando correctamente los flags.
   ###
 
-  coll = conn.collection "workers"
+  coll = conn.collection "tasks"
   # Preparar las task para que ejecuten el reduce
   if flag_mapper
     flag_mapper =  false

@@ -42,7 +42,7 @@ getWork = (task_id=null, callback) ->
   lo busca aleatoriamente. Luego llama a la funcion callback con task como
   argumento
   ###
-  coll = db.collection 'workers'
+  coll = db.collection 'tasks'
   if task_id isnt null
     coll.findOne {_id: new ObjectID task_id}, (err, item) ->
       assert.ifError err
@@ -170,7 +170,7 @@ app.post '/data', (req, res) ->
     update["map_results.#{slice_id}"] = req.param "result"
 
   # Realiza la llamada a la DB
-  coll = db.collection 'workers'
+  coll = db.collection 'tasks'
   coll.update {
     _id: new ObjectID(task_id)},
     {$push: update},
