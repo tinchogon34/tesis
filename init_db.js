@@ -48,9 +48,6 @@ var initial_object = {
     reduce_results: {
 
     },
-    result: {
-        // resultado final
-    },
     // slices cuyos map_results no han sido reducidos
     available_slices: [0, 1],
     slices: [

@@ -7,43 +7,28 @@ assert = require 'assert'
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 login_url = 'https://localhost:8080/login'
-workers_url = 'https://localhost:8080/api/v1/workers'
-worker_results_url = 'https://localhost:8080/api/v1/worker_results'
+tasks_url = 'https://localhost:8080/api/v1/tasks'
+task_results_url = 'https://localhost:8080/api/v1/task_results'
 file = './text'
 lr = new LineByLineReader(file)
 index = 0
 hash = {}
-
+numLines = 0
 # Guarda el token que se devuelve cuando se logea con las credenciales
 # correctas, luego es el que se utiliza para hacer los requests
 token = null
-
-createdWorker = null
+createdTask = null
 slices_count = 0
 
-lr.pause() # Pausa la lectura del archivo
-
-lr.on 'line', (line)->
-  hash[index] = line # { 0: linea1, 1: linea2, .....}
-  if (index+1) % 100 == 0 # Si ya lei 100 lineas...
-    lr.pause() # Pauso la lectura del archivo
-    send_data hash # Mando los datos
-    hash = {} # Limpio el hash para los proximos 100
-  index++
-lr.on 'end', -> # Si termine de leer el archivo
-  if Object.keys(hash).length > 0 # Si quedaron datos en el hash
-    send_data hash, true  # Los envio y despues habilito para procesar
-  else
-    enable_to_process() # Sino solo habilito para procesar
-
-# El worker con la estructura basica, funcion map y reduce solamente
-newWorker =
+# El task con la estructura basica, funcion map y reduce solamente
+newTask =
   imap: 'function (k, v) {
     var countWords = function(s){
-    s = s.replace(/(^\s*)|(\s*$)/gi,"");
-    s = s.replace(/[ ]{2,}/gi," ");
-    s = s.replace(/\\n /,"\\n");
-    return s.split(" ").length;};
+      if(s == ""){ return 0; }
+      s = s.replace(/^\s+|\s+$/g, "");
+      s = s.replace(/[\'";:,.?¿\\-!¡\\n\\r\\t\\f]+/g, "");
+      return s.split(" ").length;
+    };
     self.log("inv in");
     self.emit("llave", countWords(v));
     self.log("inv in out");};'
@@ -56,21 +41,6 @@ newWorker =
 loginCredentials =
   username: 'investigador'
   password: 'investigador'
-
-# Me logeo con las credenciales
-request.post login_url, { json: loginCredentials }, (error, response, body) ->
-  assert.ifError error
-  assert.equal response.statusCode, 200 # Si todo salio bien
-  token = body.token # Guardo el bearer token que se me devolvio
-
-  # Creo el worker definido anteriormente
-  request.post(workers_url, {json: newWorker}, (error, response, worker) ->
-    assert.ifError error
-    assert.equal response.statusCode, 200 # Si todo salio bien
-
-    createdWorker = worker # Guardo el worker creado
-    lr.resume() # Resumo la lectura del archivo
-  ).auth null, null, true, token
 
 get_slices = (data, size) ->
   # {0: ..., 1: ...., 2: ..., 3: ...., 4: ....}
@@ -102,16 +72,15 @@ send_data = (data, enable = false) ->
   # indice 0
   slices_count += slices.length
   
-  # Armo del objeto que voy a postear a la db con los nuevos datos del worker
+  # Armo del objeto que voy a postear a la db con los nuevos datos del task
   json =
-    data: data
     available_slices: available_slices
     slices: slices
 
-  # Agrego los datos al worker
-  request.post(workers_url+'/'+createdWorker._id+'/addData',
+  # Agrego los datos al task
+  request.post(tasks_url+'/'+createdTask._id+'/addData',
     {json: json},
-    (error, response, updatedWorker) ->
+    (error, response, updatedTask) ->
       assert.ifError error
       assert.equal response.statusCode, 200 # Si todo salio bien
 
@@ -121,11 +90,50 @@ send_data = (data, enable = false) ->
         lr.resume() # Sino resumo la lectura del archivo
   ).auth null, null, true, token
 
-# Habilito el worker para que sea procesado
+# Habilito el task para que sea procesado
 enable_to_process = ->
-  request.post(workers_url+'/'+createdWorker._id+'/enable',
+  request.post(tasks_url+'/'+createdTask._id+'/enable',
     {json: true},
-    (error, response, updatedWorker) ->
+    (error, response, updatedTask) ->
       assert.ifError error
       assert.equal response.statusCode, 200
   ).auth null, null, true, token
+
+lr.pause()
+lr.on 'line', (line)->
+  hash[index] = line # { 0: linea1, 1: linea2, .....}
+  if (index+1) % 100 == 0  # Si ya lei 100 lineas...
+    lr.pause() # Pauso la lectura del archivo
+    if index == numLines
+      send_data hash, true # Mando los datos
+    else
+      send_data hash
+    hash = {} # Limpio el hash para los proximos 100
+  else if index == numLines
+    if Object.keys(hash).length > 0
+      send_data hash, true
+    else
+      enable_to_process()
+  index++
+
+fs.createReadStream(file).on('data', (chunk) ->
+  numLines += chunk.toString('utf8').split(/\r\n|[\n\r\u0085\u2028\u2029]/g).length - 1
+  return).on('end', ->
+    # Me logeo con las credenciales
+    request.post login_url, { json: loginCredentials }, (error, response, body) ->
+      assert.ifError error
+      assert.equal response.statusCode, 200 # Si todo salio bien
+      token = body.token # Guardo el bearer token que se me devolvio
+
+      # Creo el task definido anteriormente
+      request.post(tasks_url, {json: newTask}, (error, response, task) ->
+        assert.ifError error
+        assert.equal response.statusCode, 200 # Si todo salio bien
+
+        createdTask = task # Guardo el task creado
+        lr.resume()
+      ).auth null, null, true, token    
+)
+
+
+

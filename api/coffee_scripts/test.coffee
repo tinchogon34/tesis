@@ -5,16 +5,11 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 login_url = 'https://localhost:8080/login'
 dummy_url = 'https://localhost:8080/api/v1/dummy'
-workers_url = 'https://localhost:8080/api/v1/workers'
-worker_results_url = 'https://localhost:8080/api/v1/worker_results'
+tasks_url = 'https://localhost:8080/api/v1/tasks'
+task_results_url = 'https://localhost:8080/api/v1/task_results'
 fake_token = 'faketoken'
 
-newWorker =
-  data:
-    0: 1
-    1: 1
-    2: 2
-    3: 3
+newTask =
   imap: "function (k, v) {\r\n  self.log(\"inv in\"); self.emit(\"llave\", v*v);\r\n  self.log(\"inv in out\");\r\n};"
   ireduce: "function (k, vals) {\r\n  var total = vals.reduce(function(a, b) {\r\n    return parseInt(a) + parseInt(b);\r\n  });\r\n  self.emit(k, total);\r\n};"
   available_slices: [0, 1]
@@ -58,29 +53,29 @@ request.post login_url, { json: loginCredentials }, (error, response, body) ->
     assert.ifError error
     assert.equal response.statusCode, 200).auth null, null, true, token
 
-  #Test workers controller addWorker
-  request.post(workers_url, {json: newWorker}, (error, response, createdWorker) ->
+  #Test tasks controller addtask
+  request.post(tasks_url, {json: newTask}, (error, response, createdTask) ->
     assert.ifError error
     assert.equal response.statusCode, 200
 
-    #Test workers controller findById
-    request.get(workers_url+'/'+createdWorker._id, {json: true}, (error, response, workerFound) ->
+    #Test tasks controller findById
+    request.get(tasks_url+'/'+createdTask._id, {json: true}, (error, response, taskFound) ->
       assert.ifError error
       assert.equal response.statusCode, 200
 
-      #Test worker_results controller getResult
-      request.get(worker_results_url+'/'+workerFound._id, (error, response, workerResult) ->
+      #Test task_results controller getResult
+      request.get(task_results_url+'/'+taskFound._id, (error, response, taskResult) ->
         assert.ifError error
         assert.equal response.statusCode, 404
       ).auth null, null, true, token
 
-      #Test workers controller enableToProcess
-      request.post(workers_url+'/'+workerFound._id+'/enable', {json: true}, (error, response, workerEnabled) ->
+      #Test tasks controller enableToProcess
+      request.post(tasks_url+'/'+taskFound._id+'/enable', {json: true}, (error, response, taskEnabled) ->
         assert.ifError error
         assert.equal response.statusCode, 200
 
-        #Test workers controller deleteWorker
-        request.del(workers_url+'/'+workerEnabled._id, (error, response, body) ->
+        #Test tasks controller deletetask
+        request.del(tasks_url+'/'+taskEnabled._id, (error, response, body) ->
           assert.ifError error
           assert.equal response.statusCode, 200
         ).auth null, null, true, token

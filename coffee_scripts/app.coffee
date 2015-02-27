@@ -1,4 +1,4 @@
-express = require 'express.io'
+express = require 'express'
 bodyParser = require 'body-parser'
 compression = require 'compression'
 morgan  = require 'morgan'
@@ -35,17 +35,6 @@ app.use bodyParser.urlencoded extended: true
 app.use compression()
 app.use allowCrossDomain
 
-# remove?
-shuffle = (h) ->
-  keys = Object.keys(h)
-  size = keys.length
-  for i in [0..size-1] # For each key
-    randomKeyI = keys[i]
-    j = Math.floor(Math.random() * size) # Pick random key
-    randomKeyJ = keys[j]
-    [h[randomKeyI], h[randomKeyJ]] = [h[randomKeyJ], h[randomKeyI]] # Do swap
-  return h
-
 
 getWork = (task_id=null, callback) ->
   ###
@@ -53,7 +42,7 @@ getWork = (task_id=null, callback) ->
   lo busca aleatoriamente. Luego llama a la funcion callback con task como
   argumento
   ###
-  coll = db.collection 'workers'
+  coll = db.collection 'tasks'
   if task_id isnt null
     coll.findOne {_id: new ObjectID task_id}, (err, item) ->
       assert.ifError err
@@ -65,27 +54,22 @@ getWork = (task_id=null, callback) ->
   Elije uno aleatoriamente.
   Si hay un Task listo para reducir tiene mayor prioridad.
   ###
-  coll.find(
-    {$where: "this.available_slices.length == 0 && this.enabled_to_process"}).count (err, _n) ->
-      assert.ifError err
-
-      console.log "hay para reducir #{_n}"
-      if _n isnt 0
-        coll.find({$where: "this.available_slices.length == 0 && this.enabled_to_process"}).limit(1).skip(
-          _.random(_n - 1)).nextObject((err, item) ->
-            if err
-              console.error err
-              return
-            callback item, true
-          )
-      else
-        coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).count (err, _n) ->
+  coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process"}).count (err, _n) ->
+    assert.ifError err
+    if _n isnt 0
+      coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
+        assert.ifError err
+        callback item, true
+      )
+    else
+      coll.find({$where: "this.available_slices.length > 0 && this.enabled_to_process"}).count (err, _n) ->
+        assert.ifError err
+        if _n is 0
+          return callback null
+        coll.find({$where: "this.available_slices.length > 0 && this.enabled_to_process"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
           assert.ifError err
-          coll.find({$where: "this.available_slices.length > 1 && this.enabled_to_process"}).limit(1).skip(
-            _.random(_n - 1)).nextObject((err, item) ->
-              assert.ifError err
-              callback item, false
-            )
+          callback item, false
+        )
 
 
 sendData = (work, reducing, res) ->
@@ -104,6 +88,10 @@ sendData = (work, reducing, res) ->
       data: data
 
   else
+    if work.available_slices.length is 0
+      return res.json
+        status: "finished"
+
     _slice_id = _.sample work.available_slices
     return res.json
       slice_id: _slice_id
@@ -154,12 +142,17 @@ app.post '/data', (req, res) ->
   que el cliente siga con la siguiente tarea.
   ###
 
-  console.log "Posting to /data", req.param("result")
   if undefined in [req.body.task_id, req.body.result, req.body.reducing]
     return res.status(400).send "Missing argument(s)"
 
   reducing = req.body.reducing
   task_id = req.param "task_id"
+
+  console.log "Posting to /data", req.param("result")
+  if reducing
+    console.log "Reducindo"
+  else
+    console.log "mapeando"
 
   # Prepara el obj para actulizar a DB
   if reducing
@@ -177,7 +170,7 @@ app.post '/data', (req, res) ->
     update["map_results.#{slice_id}"] = req.param "result"
 
   # Realiza la llamada a la DB
-  coll = db.collection 'workers'
+  coll = db.collection 'tasks'
   coll.update {
     _id: new ObjectID(task_id)},
     {$push: update},
@@ -188,37 +181,6 @@ app.post '/data', (req, res) ->
   # Devuelve mas datos
   getWork task_id, (work) ->
     sendData(work, reducing, res)
-
-
-# remove?
-app.post '/form', (req, res) ->
-  # Investigator post a new JOBS to distribute.
-  console.log(req.body)
-  data = JSON.parse req.body.data.replace(/'/g,"\"")
-  map = req.body.map
-  reduce = req.body.reduce
-
-  # DO CHECKS
-
-  doc =
-    data: data
-    worker_code: "investigador_map = " + map
-    reduce: reduce
-    map_results: {}
-    reduce_results: {}
-    slices: get_slices(data, 3)
-    current_slice: -1
-    status: 'created'
-    received_count: 0
-    send_count: 0
-
-  db.collection 'workers', (err, collection) ->
-    assert.ifError err
-    collection.insert doc, {w: 1}, (err, result) ->
-      assert.ifError err
-      assert.ok result
-
-    res.send "Thx for submitting a job"
 
 console.log "listening to localhost:3000"
 app.listen '3000'
