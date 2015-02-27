@@ -4,9 +4,6 @@ assert = require 'assert'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-#keyFile =  fs.readFileSync('./ssl/api.key')
-#certFile = fs.readFileSync('./ssl/api.crt')
-
 login_url = 'https://localhost:8080/login'
 workers_url = 'https://localhost:8080/api/v1/workers'
 worker_results_url = 'https://localhost:8080/api/v1/worker_results'
@@ -30,20 +27,20 @@ to_hash = (data) ->
 	return hash
 
 get_slices = (data, size) ->
-	# { "0" : 1, "1" : 1, "2" : 2, "3" : 3 }
-	# { "0": { "0" : 1, "1" : 1, "2" : 2 }, 1: {"3" : 3} }
-	hash = {}
-	keysLength = Object.keys(data).length
-	hash[i] = {} for i in [0..Math.floor(keysLength/size)]
-	i = 0
-	contador = 0    
-	for key, value of data
-		#hash[i] ||= {}
-		hash[i][key] ||= {}
-		hash[i][key] = value
-		contador++
-		i++ if (contador) % size == 0
-	return hash
+  # {0: ..., 1: ...., 2: ..., 3: ...., 4: ....}
+  # [{0: ..., 1: ...}, {2: ..., 3: ....}, {4: ....}]
+
+  arr = []
+  keysLength = Object.keys(data).length
+
+  arr[i] = {} for i in [0...Math.ceil(keysLength/size)]
+  i = 0
+  contador = 0
+  for key, value of data
+    arr[i][key] = value
+    contador++
+    i++ if (contador) % size == 0
+  return arr
 
 arr = []
 pick = (n, got, pos, from) ->
