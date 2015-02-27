@@ -4,4 +4,3 @@ app.js
 reducer.js
 worker.js
 public/proc.js
-api/models/worker.js
