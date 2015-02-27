@@ -9,9 +9,9 @@
   exec('./compile_coffees.sh', function(error, stdout, stderr) {
     console.log("cleaning db");
     return exec('node init_db.js -c -r 0', function(error, stdout, stderr) {
-      console.log("init api started on port 8080");
+      console.log("init api started");
       return exec('cd api && node init_api_db.js', function(error, stdout, stderr) {
-        console.log("api started");
+        console.log("api started on port 8080");
         exec('cd api && node app.js', function(error, stdout, stderr) {});
         return setTimeout(function() {
           console.log("running example");
