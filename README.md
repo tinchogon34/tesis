@@ -36,6 +36,24 @@ procesos que ejecutaran la funciona Map del Investigador en un Web Worker
 en el cliente de W y nos traeran las resultados para luego realizar
 la funcion Reduce.
 
+## Descripcion de archivos
+
+En /api si encuentra el HTTP server que tiene la API REST.
+
+En /client se encuentra un web server W en python que corre en localhost:8000.
+Sobre sus clientes es donde se distribuye las tareas.
+
+En /coffee_script estan todos los archivos *.coffee
+
+En /examples/contador se encuentra el ejemplo. Este es ejemplo es de un contador
+de palabras de un archivo.
+
+En /public se encuentra el proc.js
+
+Un script importante es `reducer.js`. Es un demonio que se encarga de leer en la
+base de datos el estado de las tareas distribuidas y realizar sobre ellas
+operaciones de mantenimiento.
+
 
 ### Instalación
 
@@ -43,7 +61,9 @@ la funcion Reduce.
 
 + Instalar dependencias:
 
-`npm install express.io underscore mongodb body-parser morgan compression serve-static sleep`
+`npm install`
+
+`npm start` para ejecutar el ejemplo.
 
 
 [1]: http://www.um.edu.ar/

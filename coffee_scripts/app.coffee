@@ -148,12 +148,6 @@ app.post '/data', (req, res) ->
   reducing = req.body.reducing
   task_id = req.param "task_id"
 
-  console.log "Posting to /data", req.param("result")
-  if reducing
-    console.log "Reducindo"
-  else
-    console.log "mapeando"
-
   # Prepara el obj para actulizar a DB
   if reducing
     console.log "Store results ", req.param "result"
