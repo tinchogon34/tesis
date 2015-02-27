@@ -1,6 +1,6 @@
 {
   "name": "Tesis",
-  "description": "hello world test app",
+  "description": "Tesis project",
   "version": "0.0.1",
   "private": true,
   "preferGlobal": false,
@@ -23,5 +23,6 @@
     "express-jwt": "1.0.0",
     "bcrypt": "0.8.x",
     "request": "2.51.x"
-  }
+  },
+  "scripts": { "start": "coffee coffee_scripts/launch.coffee" }
 }
