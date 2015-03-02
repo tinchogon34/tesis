@@ -124,11 +124,11 @@ app.get '/data', (req, res) ->
    Devuelve en JSON datos para ser procesados en el cliente.
   ###
 
-  if undefined in [req.param "reducing", req.param "task_id"]
+  if undefined in [req.query.reducing, req.query.task_id]
     return res.status(400).send "Missing argument(s)"
 
-  task_id = req.param "task_id"
-  reducing = req.param("reducing") is "true"
+  task_id = req.query.task_id
+  reducing = req.query.reducing is "true"
   console.log "GET /data con #{reducing} task_id=#{task_id}"
 
   getWork task_id, (work) ->
@@ -146,22 +146,22 @@ app.post '/data', (req, res) ->
     return res.status(400).send "Missing argument(s)"
 
   reducing = req.body.reducing
-  task_id = req.param "task_id"
+  task_id = req.body.task_id
 
   # Prepara el obj para actulizar a DB
   if reducing
-    console.log "Store results ", req.param "result"
+    console.log "Store results ", req.body.result
     update = {}
-    for key, value of req.param "result"
+    for key, value of req.body.result
       update["reduce_results.#{key}"] = value
 
   else
     if req.body.slice_id is undefined
       return res.status(400).send "Missing argument(s)"
 
-    slice_id = req.param "slice_id"
+    slice_id = req.body.slice_id
     update = {}
-    update["map_results.#{slice_id}"] = req.param "result"
+    update["map_results.#{slice_id}"] = req.body.result
 
   # Realiza la llamada a la DB
   coll = db.collection 'tasks'

@@ -4,3 +4,4 @@ app.js
 reducer.js
 worker.js
 public/proc.js
+logs/*.log
