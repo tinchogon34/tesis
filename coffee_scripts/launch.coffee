@@ -1,24 +1,30 @@
-exec = require('child_process').exec
+spawn = require('child_process').spawn
 
 console.log "compiling coffees"
-exec './compile_coffees.sh', (error, stdout, stderr) ->
+compile_coffees = spawn './compile_coffees.sh'
+compile_coffees.on 'exit', (code) ->  
   console.log "cleaning db"
-  exec 'node init_db.js -c -r 0', (error, stdout, stderr) ->
+  init_db = spawn 'node', ['init_db.js', '-c', '-r 0']
+  init_db.on 'exit', (code) ->
     console.log "init api started"
-    exec 'cd api && node init_api_db.js', (error, stdout, stderr) ->
+    init_api_db = spawn 'node', ['init_api_db.js'], {cwd: 'api'}
+    init_api_db.on 'exit', (code) ->
       console.log "api started on port 8080"
-      exec 'cd api && node app.js', (error, stdout, stderr) ->
-        return
+      api = spawn 'node', ['app.js'], {cwd: 'api'}
       setTimeout(->
         console.log "running example"
-        exec 'cd examples/contador && node app.js', (error, stdout, stderr) ->
+        example = spawn 'node', ['app.js'], {cwd: 'examples/contador'}
+        example.on 'exit', (code) ->
           console.log "server started on port 3000"
-          exec 'node app.js', (error, stdout, stderr) ->
-            return
+          core = spawn 'node', ['app.js']
+          core.stderr.on 'data', (data) ->
+            console.log "core error: " + data
           console.log "reducer started"
-          exec 'node reducer.js', (error, stdout, stderr) ->
-            return
+          reducer = spawn 'node', ['reducer.js']
+          reducer.stderr.on 'data', (data) ->
+            console.log "reducer error: " + data
           console.log "client started on port 8000"
-          exec 'cd client && ./start.sh', (error, stdout, stderr) ->
-            return
+          client = spawn './start.sh', [], {cwd: 'client'}
+          client.stderr.on 'data', (data) ->
+            console.log "client error: " + data
       ,5000)
