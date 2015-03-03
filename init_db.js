@@ -6,7 +6,7 @@
  *   -r, --records <ARG1>  New Records Quantity
  *   -t, --type <ARG1>     Object Type
  *   -c, --clean           Clean DB
-*/
+ */
 
 // Manejo de argumentos
 var stdio = require('stdio');
@@ -48,20 +48,18 @@ var initial_object = {
     reduce_results: {
 
     },
-    result: {
-        // resultado final
-    },
     // slices cuyos map_results no han sido reducidos
     available_slices: [0, 1],
     slices: [
-        {
-            0: 1,
-            1: 1,
-            2: 2
-        }, {
-            3: 3
-        }
-    ]
+    {
+        0: 1,
+        1: 1,
+        2: 2
+    }, {
+        3: 3
+    }
+    ],
+    enabled_to_process: true
 };
 
 var mapped_object = {
@@ -71,17 +69,18 @@ var mapped_object = {
     ireduce: REDUCE,
     map_results: {
         "0" : [
-            {llave: [1, 1, 4]}, {llave: [1, 1, 4]}, {llave: [1, 1, 4]}, {llave: [1, 1, 4]},
-            {llave: [1, 1, 4]}
+        {llave: [1, 1, 4]}, {llave: [1, 1, 4]}, {llave: [1, 1, 4]}, {llave: [1, 1, 4]},
+        {llave: [1, 1, 4]}
         ], 
         "1" : [
-            {llave: [9]}, {llave: [9]}, {llave: [9]}, {llave: [9]}, {llave: [9]}
+        {llave: [9]}, {llave: [9]}, {llave: [9]}, {llave: [9]}, {llave: [9]}
         ]
     },
     reduce_data: {},
     reduce_results: {},
     result: {},
-    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }]
+    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }],
+    enabled_to_process: true
 };
 
 /* Objecto ya reducido. Listo para ser procesado y finalizado */
@@ -93,58 +92,75 @@ var reduced_object = {
     map_results: {},
     reduce_data: {
         "llave" : [
-            1,
-            1,
-            4,
-            9
+        1,
+        1,
+        4,
+        9
         ]
     },
     reduce_results: {
         "llave" : [
-            [15], [15], [15], [15], [15], [15]
+        [15], [15], [15], [15], [15], [15]
         ]
     },
     result: {},
-    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }]
+    slices: [{"0": 1, "1": 1, "2": 2 }, {"3": 3 }],
+    enabled_to_process: true
 };
 
 // imports
 var MongoClient = require('mongodb').MongoClient,
-    assert = require('assert'),
-    _ = require("underscore"),
-    RECORDS = options.records || 10,
-    url = 'mongodb://localhost:27017/tesis',
-    obj = null;
+assert = require('assert'),
+_ = require("underscore"),
+RECORDS = options.records || 10,
+url = 'mongodb://localhost:27017/tesis',
+obj = null;
 
 switch(options.type) {
     case "mapped":
-        obj = mapped_object;
-        break;
+    obj = mapped_object;
+    break;
     case "reduced":
-        obj = reduced_object;
-        break;
+    obj = reduced_object;
+    break;
     default:
     obj = initial_object;
 }
 
 // Connect and add records
 MongoClient.connect(url, function(err, conn) {
-    assert.equal(null, err);
+    assert.ifError(err);
     console.log("Connected correctly to server");
-    var workers = conn.collection("workers"),
-        arr = [];
+    var tasks = conn.collection("tasks"),
+    arr = [];
     if (options.clean) {
-      workers.remove({}, function(err, result) {
-        assert.equal(err, null);
-        console.log("DB Cleaned");
-      });
-    }
-    for(var i = 0; i < RECORDS; i++)
-        arr.push(_.clone(obj));
+      tasks.remove({}, function(err, result) {
+        assert.ifError(err);
+        console.log("DB Tasks Cleaned");
+        conn.collection("task_results").remove({}, function(err, result) {
+            assert.ifError(err);
+            console.log("DB Task Results Cleaned");
+            conn.collection("users").remove({}, function(err, result) {
+                assert.ifError(err);
+                console.log("DB Users Cleaned");
+                if(RECORDS <= 0){
+                    conn.close();
+                }
+            });
+            });
+        });
 
-    workers.insert(arr, function (err, result) {
-        assert.equal(err, null);
-        console.log("Inserted elements: ", result.length);
-        conn.close();
-    });
+
+  }
+  if(RECORDS <= 0){
+    return;
+}
+for(var i = 0; i < RECORDS; i++)
+    arr.push(_.clone(obj));
+tasks.insert(arr, function (err, result) {
+    assert.ifError(err);
+    console.log("Inserted elements: ", result.length);
+    conn.close();
+});
+
 });
