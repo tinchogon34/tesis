@@ -30,7 +30,8 @@ newTask =
       return s.split(" ").length;
     };
     self.log("inv in");
-    self.emit("llave", countWords(v));
+    var words = countWords(v);
+    if(words){ self.emit("llave", words); }
     self.log("inv in out");};'
   ireduce: 'function (k, vals) {
     var total = vals.reduce(function(a, b) {
