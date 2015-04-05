@@ -77,7 +77,7 @@ sendData = (work, reducing, res) ->
   Busca en el work datos y los envia al cliente.
   ###
   if work is null
-    return res.status(400).send "Work not found"
+    return res.status(404).send "Work not found"
 
   if reducing
     _data = _.sample(_.pairs(work.reduce_data))
