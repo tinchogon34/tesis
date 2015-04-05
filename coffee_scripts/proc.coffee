@@ -43,7 +43,7 @@ class ProcWorker
           console.error "Unhandled msg #{msg}"
 
   feed: (data) ->
-    if not @_ready
+    if not @_ready or @_task.isPaused()
       setTimeout(() =>
         @feed(data)
       , 100)
@@ -55,9 +55,7 @@ class ProcWorker
 
   isReady: () ->
     # esta listo para recibir ser datos?
-
     @_ready
-
 
 class Task
   # Se encarga de la comunicación con el servidor de tareas.
@@ -69,8 +67,11 @@ class Task
     @_slice = null # current slice_id
     @_data = null # data related with slice
     @_result = null
+    @_paused = false
 
   init: () ->
+    @_paused = false
+    return if @_worker
     $.getJSON(WORK_URL).done((json, textStatus, jqXHR) =>
       if json.task_id is 0
         @_finish()
@@ -90,6 +91,12 @@ class Task
       console.error jqXHR
       throw new Error "Cannot grab Task"
 
+  pause: () ->
+    @_paused = true
+
+  isPaused: () ->
+    # esta listo para recibir ser datos?
+    @_paused
 
   _finish: () ->
     ###
@@ -167,4 +174,21 @@ class Task
 # Start working!
 t = new Task()
 console.log "comienza proc.js"
-t.init()
+
+if /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  do inactivityTime = ->
+    timeout = null
+    start = ->
+      t.init()
+
+    resetTimer = ->
+      clearTimeout(timeout)
+      t.pause()
+      timeout = setTimeout(start, 30*1000)
+
+    window.onload = resetTimer
+    window.addEventListener('touchstart', resetTimer, false);
+    window.addEventListener('touchmove', resetTimer, false);
+    window.addEventListener('touchend', resetTimer, false);
+else
+  t.init()
