@@ -1,5 +1,5 @@
 express = require 'express'
-https = require('https');
+https = require('https')
 bodyParser = require 'body-parser'
 morgan  = require 'morgan'
 assert = require 'assert'
@@ -17,8 +17,8 @@ db_url = 'mongodb://localhost/tesis'
 db = null
 SECRET = '0239f0j3924ufm28j4y9f23842yf3984'
 options =
-  key: fs.readFileSync('./ssl/api.key')
-  cert: fs.readFileSync('./ssl/api.crt')
+  key: fs.readFileSync('../ssl/server.key')
+  cert: fs.readFileSync('../ssl/server.crt')
 
 
 # Connect to DB

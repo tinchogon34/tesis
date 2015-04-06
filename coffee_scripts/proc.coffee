@@ -11,9 +11,9 @@ termina, termina todo.
 ###
 
 
-WORK_URL = "http://127.0.0.1:3000/work"
-DATA_URL = "http://127.0.0.1:3000/data"
-MOBILE_IDLE_SECONDS = 30
+WORK_URL = "http://tesis:3000/work"
+DATA_URL = "http://tesis:3000/data"
+MOBILE_IDLE_SECONDS = 10
 
 ajaxJSON = (path, callback, data = null) ->
   xmlhttp = new XMLHttpRequest
