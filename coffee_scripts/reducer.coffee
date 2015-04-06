@@ -170,7 +170,7 @@ reducing = (task, coll, conn) ->
   if _.difference(
     Object.keys(task.reduce_results),
     Object.keys(_real_result)).length is 0
-    console.log "termino completamen el task #{task._id}"
+    console.log "termino completamente el task #{task._id}"
 
     task_results = conn.collection "task_results"
     task_result =
