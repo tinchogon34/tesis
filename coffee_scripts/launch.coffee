@@ -9,10 +9,17 @@ compile_coffees.on 'exit', (code) ->
   init_db = spawn 'node', ['init_db.js', '-c', '-r', '0']
   init_db.on 'exit', (code) ->
     console.log "init api started"
-    init_api_db = spawn 'node', ['init_api_db.js'], {cwd: 'api'}
     init_api_db.on 'exit', (code) ->
       console.log "api started on port 8080"
       api = spawn 'node', ['app.js'], {cwd: 'api'}
+      fs.truncate 'logs/api.log', 0, ->
+        return
+      fs.truncate 'logs/api.error.log', 0, ->
+        return
+      api.stdout.on 'data', (data) ->
+        fs.appendFile 'logs/api.log', data, null
+      api.stderr.on 'data', (data) ->
+        fs.appendFile 'logs/api.error.log', data, null
       setTimeout(->
         console.log "running example"
         example = spawn 'node', ['app.js'], {cwd: 'examples/contador'}

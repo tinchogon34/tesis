@@ -2,6 +2,7 @@ node_modules
 npm-debug.log
 app.js
 reducer.js
+launch.js
 worker.js
 public/proc.js
 logs/*.log

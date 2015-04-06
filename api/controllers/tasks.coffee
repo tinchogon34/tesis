@@ -1,4 +1,5 @@
 mongoose = require("mongoose")
+Sandbox = require("sandbox")
 Task = mongoose.model("Task")
 
 #GET - Devuelve un task con el ID especificado
@@ -14,19 +15,31 @@ exports.findById = (req, res) ->
 
 #POST - Inserta un nuevo task en la DB
 exports.addTask = (req, res) ->
-  task = new Task(
-    #data: req.body.data
-    imap: "investigador_map = " + req.body.imap
-    ireduce: "investigador_reduce = " + req.body.ireduce
-    available_slices: req.body.available_slices or []
-    slices: req.body.slices or []
-    user: req.user._id
-    enabled_to_process: false
-  )
-  task.save (err, task) ->
-    return res.status(500).jsonp { message: err.message } if err
-    res.status(200).jsonp task
-    return
+  imap = "investigador_map = " + req.body.imap
+  ireduce = "investigador_reduce = " + req.body.ireduce
+  try
+    throw new Error if req.body.imap.indexOf("importScript") >= 0 or req.body.imap.indexOf("XMLHttpRequest") >= 0
+    throw new Error if req.body.ireduce.indexOf("importScript") >= 0 or req.body.ireduce.indexOf("XMLHttpRequest") >= 0
+    s = new Sandbox()
+    s.run imap+';'+ireduce, (output) ->
+      isValid = output.result.indexOf("Error") < 0
+      if not isValid
+        return res.status(400).jsonp { message: "Map and/or reduce function invalid" }
+      task = new Task(
+        #data: req.body.data
+        imap: "investigador_map = " + req.body.imap
+        ireduce: "investigador_reduce = " + req.body.ireduce
+        available_slices: req.body.available_slices or []
+        slices: req.body.slices or []
+        user: req.user._id
+        enabled_to_process: false
+      )
+      task.save (err, task) ->
+        return res.status(500).jsonp { message: err.message } if err
+        res.status(200).jsonp task
+        return
+  catch err
+    return res.status(400).jsonp { message: "Map and/or reduce function invalid" }
   return
 
 #DELETE - Borra un task con el ID especificado
