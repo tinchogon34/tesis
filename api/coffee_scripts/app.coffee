@@ -56,5 +56,6 @@ app.post '/api/v1/tasks', tasksController.addTask
 app.get '/api/v1/task_results/:id', taskResultsController.getResult
 
 app.post '/login', usersController.loginWithCredentials
+app.post '/register', usersController.register
 
 httpsServer.listen '8080'

@@ -14,3 +14,18 @@ exports.loginWithCredentials = (req, res) ->
         return res.status(200).jsonp { token: token }
     return res.status(401).jsonp { message: 'Wrong user or password' }
   return
+
+#POST - Inserta un nuevo user en la DB
+exports.register = (req, res) ->
+  User.findOne {username: req.body.username}, (err, user) ->
+    return res.status(500).jsonp { message: err.message } if err
+    if user
+      return res.status(400).jsonp { message: "Username already in use" }
+    user = new User(
+      username: req.body.username
+      password_hash: bcrypt.hashSync(req.body.password, 10)
+    )
+    user.save (err, user) ->
+      return res.status(500).jsonp { message: err.message } if err
+      res.status(200).jsonp user
+      return
