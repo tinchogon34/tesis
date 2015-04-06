@@ -9,6 +9,7 @@ compile_coffees.on 'exit', (code) ->
   init_db = spawn 'node', ['init_db.js', '-c', '-r', '0']
   init_db.on 'exit', (code) ->
     console.log "init api started"
+    init_api_db = spawn 'node', ['init_api_db.js'], {cwd: 'api'}
     init_api_db.on 'exit', (code) ->
       console.log "api started on port 8080"
       api = spawn 'node', ['app.js'], {cwd: 'api'}
