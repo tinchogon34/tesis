@@ -13,7 +13,29 @@ termina, termina todo.
 
 WORK_URL = "http://127.0.0.1:3000/work"
 DATA_URL = "http://127.0.0.1:3000/data"
+MOBILE_IDLE_SECONDS = 30
 
+ajaxJSON = (path, callback, data = null) ->
+  xmlhttp = new XMLHttpRequest
+  xmlhttp.overrideMimeType 'application/json'
+
+  xmlhttp.onreadystatechange = ->
+    ready = xmlhttp.readyState == 4 and xmlhttp.status == 200
+    fail = xmlhttp.readyState == 4 and xmlhttp.status != 200
+    if ready
+      callback JSON.parse(xmlhttp.responseText), xmlhttp.statusText
+    else if fail
+      callback false, xmlhttp.statusText
+    return
+
+  if data
+    xmlhttp.open 'POST', path
+    xmlhttp.setRequestHeader 'Content-Type', 'application/json'
+    xmlhttp.send data
+  else
+    xmlhttp.open 'GET', path
+    xmlhttp.send()
+  return
 
 class ProcWorker
   # Encapsula los detalles del Web Worker.
@@ -72,24 +94,24 @@ class Task
   init: () ->
     @_paused = false
     return if @_worker
-    $.getJSON(WORK_URL).done((json, textStatus, jqXHR) =>
-      if json.task_id is 0
-        @_finish()
-        return
+    ajaxJSON(WORK_URL, (json, status) =>
+      if json
+        if json.task_id is 0
+          @_finish()
+          return
 
-      try
-        @id = json.task_id
-        @reducing = json.reducing
-        @_worker = new ProcWorker json.code, @
-        @get_data()
+        try
+          @id = json.task_id
+          @reducing = json.reducing
+          @_worker = new ProcWorker json.code, @
+          @get_data()
 
-      catch err
-        console.error err.message
-        throw new Error "Failed to create Worker"
-
-    ).fail (jqXHR, textStatus, errorThrown) ->
-      console.error jqXHR
-      throw new Error "Cannot grab Task"
+        catch err
+          console.error err.message
+          throw new Error "Failed to create Worker"
+      else
+        console.error "Cannot grab Task #{status}"
+    )
 
   pause: () ->
     @_paused = true
@@ -109,15 +131,13 @@ class Task
   get_data: (callback=->) ->
     # Trae datos del server y se los entrega al worker para que trabaje
 
-    $.getJSON(DATA_URL, {
-      task_id: @id
-      reducing: @reducing
-    }).done((json, textStatus, jqXHR) =>
-      @_prepare_data json
-      @_worker.feed @_data
-
-    ).fail (jqXHR, textStatus, errorThrown) ->
-      console.error "Cannot grab data from server"
+    ajaxJSON(DATA_URL+'?task_id='+@id+'&reducing='+@reducing, (json, status) =>
+      if json
+        @_prepare_data json
+        @_worker.feed @_data
+      else
+        console.error "Cannot grab data from server #{status}"
+    )
 
   next: (data) ->
     # POSTea `data` al servir, pide mas datos y alimenta al worker.
@@ -150,26 +170,21 @@ class Task
       @_result[key].push val
 
   _send_result: () ->
-    $.ajax(DATA_URL,
-      data: JSON.stringify
-        task_id: @id
-        slice_id: @_slice
-        result: @_result
-        reducing: @reducing
-      contentType: "application/json"
-      dataType: "json"
-      type: "post"
-
-    ).done((json, textStatus, jqXHR) =>
-      @_prepare_data json
-      @_worker.feed @_data
-
-    ).fail (jqXHR, textStatus, errorThrown) =>
-      if @reducing
-         return @_finish()
-      console.error "Cannot POST result to server #{textStatus}"
-      console.error jqXHR
-
+    ajaxJSON(DATA_URL,
+        (json, status) =>
+          if json
+            @_prepare_data json
+            @_worker.feed @_data
+          else
+            if @reducing
+              return @_finish()
+            console.error "Cannot POST result to server #{status}",
+        JSON.stringify
+          task_id: @id
+          slice_id: @_slice
+          result: @_result
+          reducing: @reducing
+    )
 
 # Start working!
 t = new Task()
@@ -184,7 +199,7 @@ if /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigat
     resetTimer = ->
       clearTimeout(timeout)
       t.pause()
-      timeout = setTimeout(start, 30*1000)
+      timeout = setTimeout(start, MOBILE_IDLE_SECONDS*1000)
 
     window.onload = resetTimer
     window.addEventListener('touchstart', resetTimer, false);
