@@ -8,6 +8,7 @@
     "bcrypt": "0.8.x",
     "body-parser": "1.4.x",
     "compression": "1.0.x",
+    "cors": "^2.5.3",
     "express": "4.x.x",
     "express-jwt": "1.0.0",
     "jsonwebtoken": "3.2.x",

@@ -4,11 +4,11 @@ request = require 'request'
 assert = require 'assert'
 
 # Para que no importe que el certificado https no sea firmado
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+#process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-login_url = 'https://localhost:8080/login'
-tasks_url = 'https://localhost:8080/api/v1/tasks'
-task_results_url = 'https://localhost:8080/api/v1/task_results'
+login_url = 'http://localhost:8080/login'
+tasks_url = 'http://localhost:8080/api/v1/tasks'
+task_results_url = 'http://localhost:8080/api/v1/task_results'
 file = './text'
 lr = new LineByLineReader(file)
 index = 0

@@ -8,6 +8,7 @@ fs = require 'fs'
 MongoClient = require('mongodb').MongoClient
 ObjectID = require('mongodb').ObjectID
 _ = require("underscore")
+cors = require('cors')
 
 app = express()
 trusted_hosts = ['*']
@@ -33,7 +34,8 @@ app.use morgan 'default'
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: true
 app.use compression()
-app.use allowCrossDomain
+app.use cors()
+#app.use allowCrossDomain
 
 
 getWork = (task_id=null, callback) ->
