@@ -11,6 +11,7 @@ mongoose = require 'mongoose'
 jwt = require 'jsonwebtoken'
 expressjwt = require 'express-jwt'
 fs = require 'fs'
+cors = require('cors')
 
 app = express()
 db_url = 'mongodb://localhost/tesis'
@@ -37,9 +38,10 @@ usersController = require('./controllers/users')
 app.use morgan 'default'
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: true
+app.use cors()
 app.use '/api', expressjwt({secret: SECRET})
 app.use (err, req, res, next) ->
-  res.status(401).jsonp { message: 'You must login first' } if err.constructor.name == 'UnauthorizedError'
+  res.status(401).json { message: 'You must login first' } if err.constructor.name == 'UnauthorizedError'
 
 #httpsServer = https.createServer(options, app)
 

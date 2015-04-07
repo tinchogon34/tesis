@@ -5,11 +5,11 @@ Task = mongoose.model("Task")
 #GET - Devuelve un task con el ID especificado
 exports.findById = (req, res) ->
   Task.findById req.params.id, (err, task) ->
-    return res.status(500).jsonp { message: err.message } if err
+    return res.status(500).json { message: err.message } if err
     return res.send 404 unless task # 404 si no existe el task
     # Unauthorized si no es el propietario del task
-    return res.status(401).jsonp { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
-    res.status(200).jsonp task
+    return res.status(401).json { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
+    res.status(200).json task
     return
   return
 
@@ -24,7 +24,7 @@ exports.addTask = (req, res) ->
     s.run imap+';'+ireduce, (output) ->
       isValid = output.result.indexOf("Error") < 0
       if not isValid
-        return res.status(400).jsonp { message: "Map and/or reduce function invalid" }
+        return res.status(400).json { message: "Map and/or reduce function invalid" }
       task = new Task(
         #data: req.body.data
         imap: "investigador_map = " + req.body.imap
@@ -35,22 +35,22 @@ exports.addTask = (req, res) ->
         enabled_to_process: false
       )
       task.save (err, task) ->
-        return res.status(500).jsonp { message: err.message } if err
-        res.status(200).jsonp task
+        return res.status(500).json { message: err.message } if err
+        res.status(200).json task
         return
   catch err
-    return res.status(400).jsonp { message: "Map and/or reduce function invalid" }
+    return res.status(400).json { message: "Map and/or reduce function invalid" }
   return
 
 #DELETE - Borra un task con el ID especificado
 exports.deleteTask = (req, res) ->
   Task.findById req.params.id, (err, task) ->
-    return res.status(500).jsonp { message: err.message } if err
+    return res.status(500).json { message: err.message } if err
     return res.send 404 unless task # 404 si no existe el task
     # Unauthorized si no es el propietario del task
-    return res.status(401).jsonp { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
+    return res.status(401).json { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
     task.remove (err) ->
-      return res.status(500).jsonp { message: err.message } if err
+      return res.status(500).json { message: err.message } if err
       res.send 200
       return
     return
@@ -59,18 +59,18 @@ exports.deleteTask = (req, res) ->
 #POST - Agrega datos al task con el ID especificado
 exports.addData = (req, res) ->
   Task.findById req.params.id, (err, task) ->
-    return res.status(500).jsonp { message: err.message } if err
+    return res.status(500).json { message: err.message } if err
     return res.send 404 unless task # 404 si no existe el task
     # Unauthorized si no es el propietario del task
-    return res.status(401).jsonp { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
+    return res.status(401).json { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
     #task.data = task.data || {}
     #for attrname of req.body.data
     #  task.data[attrname] = req.body.data[attrname]
     task.available_slices = task.available_slices.concat req.body.available_slices
     task.slices = task.slices.concat req.body.slices
     task.save (err) ->
-      return res.status(500).jsonp { message: err.message } if err
-      res.status(200).jsonp task
+      return res.status(500).json { message: err.message } if err
+      res.status(200).json task
       return
     return
   return
@@ -78,14 +78,14 @@ exports.addData = (req, res) ->
 #POST - Actualiza el task con el ID especificado para que pueda ser procesado
 exports.enableToProcess = (req, res) ->
   Task.findById req.params.id, (err, task) ->
-    return res.status(500).jsonp { message: err.message } if err
+    return res.status(500).json { message: err.message } if err
     return res.send 404 unless task # 404 si no existe el task
     # Unauthorized si no es el propietario del task
-    return res.status(401).jsonp { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
+    return res.status(401).json { message: "Not your task"} unless mongoose.Types.ObjectId(req.user._id).equals(task.user)
     task.enabled_to_process = true
     task.save (err) ->
-      return res.status(500).jsonp { message: err.message } if err
-      res.status(200).jsonp task
+      return res.status(500).json { message: err.message } if err
+      res.status(200).json task
       return
     return
   return

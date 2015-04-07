@@ -22,12 +22,6 @@ MongoClient.connect db_url, (err, connection) ->
   assert.ok connection
   db = connection
 
-allowCrossDomain = (req, res, next) ->
-  res.header 'Access-Control-Allow-Origin', trusted_hosts
-  res.header 'Access-Control-Allow-Methods', 'GET, POST'
-  res.header 'Access-Control-Allow-Headers', 'Content-Type'
-  next()
-
 # SET MIDDLEWARE
 app.use serveStatic __dirname + '/public'
 app.use morgan 'default'
@@ -35,8 +29,6 @@ app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: true
 app.use compression()
 app.use cors()
-#app.use allowCrossDomain
-
 
 getWork = (task_id=null, callback) ->
   ###
