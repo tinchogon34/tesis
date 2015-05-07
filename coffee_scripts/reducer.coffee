@@ -176,6 +176,7 @@ reducing = (task, coll, conn) ->
     task_result =
       result: _real_result
       user: task.user
+      task: task._id
     task_results.insert [task_result], (err, result) ->
       assert.ifError err
 

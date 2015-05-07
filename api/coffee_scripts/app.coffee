@@ -54,8 +54,9 @@ app.post '/api/v1/tasks/:id/enable', tasksController.enableToProcess
 app.get '/api/v1/tasks/:id', tasksController.findById
 app.delete '/api/v1/tasks/:id', tasksController.deleteTask
 app.post '/api/v1/tasks', tasksController.addTask
+app.get '/api/v1/tasks', tasksController.listTasks
 
-app.get '/api/v1/task_results/:id', taskResultsController.getResult
+app.get '/api/v1/task_results/:task', taskResultsController.getTaskResult
 
 app.post '/login', usersController.loginWithCredentials
 app.post '/register', usersController.register

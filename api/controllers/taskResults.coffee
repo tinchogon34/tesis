@@ -1,10 +1,9 @@
 mongoose = require("mongoose")
 TaskResult = mongoose.model("TaskResult")
 
-#GET - Devuelve el hash con resultados del task con el ID especificado
-exports.getResult = (req, res) ->
-  TaskResult.findOne {task: mongoose.Types.ObjectId(req.params.id) },
-  (err, task_result) ->
+#GET - Devuelve el hash con resultados del task con el ID del task especificado
+exports.getTaskResult = (req, res) ->
+  TaskResult.findOne task: req.params.task, (err, task_result) ->
     return res.status(500).json { message: err.message } if err
     return res.send 404 unless task_result # 404 si no existe el task
     # Unauthorized si no es el propietario del task

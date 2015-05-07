@@ -13,6 +13,14 @@ exports.findById = (req, res) ->
     return
   return
 
+#GET - Devuelve un listado de todos los task
+exports.listTasks = (req, res) ->
+  Task.find user: req.user._id, 'imap ireduce available_slices enabled_to_process', (err, tasks) ->
+    return res.status(500).json { message: err.message } if err
+    res.status(200).json tasks
+    return
+  return
+
 #POST - Inserta un nuevo task en la DB
 exports.addTask = (req, res) ->
   imap = "investigador_map = " + req.body.imap
