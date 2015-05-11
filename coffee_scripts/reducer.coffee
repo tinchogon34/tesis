@@ -13,8 +13,8 @@ _ = require "underscore"
 fs = require "fs"
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
-MAPPED = "this.available_slices.length > 0 && this.enabled_to_process"
-REDUCING = "this.available_slices.length === 0 && this.enabled_to_process"
+MAPPED = "this.available_slices.length > 0 && this.enabled_to_process && !this.finished"
+REDUCING = "this.available_slices.length === 0 && this.enabled_to_process && !this.finished"
 LOCK_PATH = "/var/tmp/.tesis.lock"
 
 # flags
@@ -180,8 +180,11 @@ reducing = (task, coll, conn) ->
     task_results.insert [task_result], (err, result) ->
       assert.ifError err
 
-      coll.remove {_id: task._id}, (err, count) ->
+      coll.update {_id: task._id}, {$set: {finished: true}}, (err, count, status) ->
         assert.ifError err
+        assert.strictEqual count, 1, "updated record #{count} != 1"        
+      #coll.remove {_id: task._id}, (err, count) ->
+      #  assert.ifError err
 
 
 proccesor = (conn) ->

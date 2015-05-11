@@ -24,8 +24,15 @@ exports.register = (req, res) ->
     user = new User(
       username: req.body.username
       password_hash: bcrypt.hashSync(req.body.password, 10)
+      name: req.body.name
+      lastname: req.body.lastname
     )
     user.save (err, user) ->
       return res.status(500).json { message: err.message } if err
       res.status(200).json user
       return
+
+#GET - Devuelve el user logeado
+exports.getLoggedUser = (req, res) ->  
+  res.status(200).json req.user    
+  return

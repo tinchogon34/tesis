@@ -22,12 +22,16 @@ var bcrypt = require('bcrypt');
 // sample object
 var test = {
     username: "test",
-    password_hash: bcrypt.hashSync("test",10)
+    password_hash: bcrypt.hashSync("test",10),
+    name: "Test",
+    lastname: "Prueba"
 };
 
 var investigador = {
     username: "investigador",
-    password_hash: bcrypt.hashSync("investigador",10)
+    password_hash: bcrypt.hashSync("investigador",10),
+    name: "Investigador",
+    lastname: "Prueba"
 };
 
 // imports

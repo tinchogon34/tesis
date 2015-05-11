@@ -48,19 +48,19 @@ getWork = (task_id=null, callback) ->
   Elije uno aleatoriamente.
   Si hay un Task listo para reducir tiene mayor prioridad.
   ###
-  coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process"}).count (err, _n) ->
+  coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process && !this.finished"}).count (err, _n) ->
     assert.ifError err
     if _n isnt 0
-      coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
+      coll.find({$where: "this.available_slices.length === 0 && this.enabled_to_process && !this.finished"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
         assert.ifError err
         callback item, true
       )
     else
-      coll.find({$where: "this.available_slices.length > 0 && this.enabled_to_process"}).count (err, _n) ->
+      coll.find({$where: "this.available_slices.length > 0 && this.enabled_to_process && !this.finished"}).count (err, _n) ->
         assert.ifError err
         if _n is 0
           return callback null
-        coll.find({$where: "this.available_slices.length > 0 && this.enabled_to_process"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
+        coll.find({$where: "this.available_slices.length > 0 && this.enabled_to_process && !this.finished"}).limit(1).skip(_.random(_n - 1)).nextObject((err, item) ->
           assert.ifError err
           callback item, false
         )
@@ -73,6 +73,10 @@ sendData = (work, reducing, res) ->
   if work is null
     return res.status(404).send "Work not found"
 
+  if work.available_slices.length is 0 and work.finished
+      return res.json
+        status: "finished"
+
   if reducing
     _data = _.sample(_.pairs(work.reduce_data))
     data = {}
@@ -82,10 +86,6 @@ sendData = (work, reducing, res) ->
       data: data
 
   else
-    if work.available_slices.length is 0
-      return res.json
-        status: "finished"
-
     _slice_id = _.sample work.available_slices
     return res.json
       slice_id: _slice_id

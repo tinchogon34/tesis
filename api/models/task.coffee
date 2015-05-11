@@ -10,6 +10,7 @@ exports = module.exports = (app, mongoose) ->
 		slices: { type: [mongoose.Schema.Types.Mixed], default: [] }
 		user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 		enabled_to_process: Boolean
+		finished: Boolean
 	},
 		minimize: false
 	)

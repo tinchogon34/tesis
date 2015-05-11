@@ -15,7 +15,7 @@ exports.findById = (req, res) ->
 
 #GET - Devuelve un listado de todos los task
 exports.listTasks = (req, res) ->
-  Task.find user: req.user._id, 'imap ireduce available_slices enabled_to_process', (err, tasks) ->
+  Task.find user: req.user._id, 'imap ireduce available_slices enabled_to_process finished', (err, tasks) ->
     return res.status(500).json { message: err.message } if err
     res.status(200).json tasks
     return
@@ -41,6 +41,7 @@ exports.addTask = (req, res) ->
         slices: req.body.slices or []
         user: req.user._id
         enabled_to_process: false
+        finished: false
       )
       task.save (err, task) ->
         return res.status(500).json { message: err.message } if err

@@ -61,6 +61,7 @@ app.delete '/api/v1/task_results/:id', taskResultsController.deleteTaskResult
 
 app.post '/login', usersController.loginWithCredentials
 app.post '/register', usersController.register
+app.get '/api/v1/users/logged', usersController.getLoggedUser
 
 #httpsServer.listen '8080'
 app.listen '8080'

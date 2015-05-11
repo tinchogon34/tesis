@@ -1,7 +1,9 @@
 exports = module.exports = (app, mongoose) ->
 	taskResultSchema = new mongoose.Schema({
     result: mongoose.Schema.Types.Mixed
-    task: mongoose.Schema.Types.ObjectId
+    task:
+      type: mongoose.Schema.Types.ObjectId
+      ref: 'Task'
     user:
       type: mongoose.Schema.Types.ObjectId
       ref: 'User'
