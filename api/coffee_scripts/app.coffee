@@ -57,6 +57,7 @@ app.post '/api/v1/tasks', tasksController.addTask
 app.get '/api/v1/tasks', tasksController.listTasks
 
 app.get '/api/v1/task_results/:task', taskResultsController.getTaskResult
+app.delete '/api/v1/task_results/:id', taskResultsController.deleteTaskResult
 
 app.post '/login', usersController.loginWithCredentials
 app.post '/register', usersController.register
