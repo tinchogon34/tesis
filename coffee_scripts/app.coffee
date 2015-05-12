@@ -73,7 +73,7 @@ sendData = (work, reducing, res) ->
   if work is null
     return res.status(404).send "Work not found"
 
-  if work.available_slices.length is 0 and work.finished
+  if work.available_slices.length is 0 or work.finished
       return res.json
         status: "finished"
 
