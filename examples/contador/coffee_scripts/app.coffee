@@ -18,7 +18,7 @@ numLines = 0
 # correctas, luego es el que se utiliza para hacer los requests
 token = null
 createdTask = null
-slices_count = 0
+#slices_count = 0
 
 # El task con la estructura basica, funcion map y reduce solamente
 newTask =
@@ -62,20 +62,20 @@ get_slices = (data, size) ->
 send_data = (data, enable = false) ->
   # Divido los datos de un solo hash en un array de hashes de 50 elementos c/u
   slices = get_slices(data, 50)
-  available_slices = []
+  #available_slices = []
 
   # Armo un array de slices disponibles con la cantidad de elementos que tengo
   # en slices
-  available_slices[i] = (i+slices_count) for i in [0...slices.length]
+  #available_slices[i] = (i+slices_count) for i in [0...slices.length]
 
   # Incremento la cantidad de slices que he enviado para poder ir armando
   # el arreglo de available_slices correctamente y no empezar siempre del
   # indice 0
-  slices_count += slices.length
+  #slices_count += slices.length
   
   # Armo del objeto que voy a postear a la db con los nuevos datos del task
   json =
-    available_slices: available_slices
+    #available_slices: available_slices
     slices: slices
 
   # Agrego los datos al task

@@ -76,7 +76,10 @@ exports.addData = (req, res) ->
     #for attrname of req.body.data
     #  task.data[attrname] = req.body.data[attrname]
     return res.status(422).json { message: "The task has already started"} if task.enabled_to_process
-    task.available_slices = task.available_slices.concat req.body.available_slices
+    return res.status(422).json { message: "The task has already finished"} if task.finished
+    available_slices = []
+    available_slices[i] = (i+task.slices.length) for i in [0...req.body.slices.length]
+    task.available_slices = task.available_slices.concat available_slices
     task.slices = task.slices.concat req.body.slices
     task.save (err) ->
       return res.status(500).json { message: err.message } if err
