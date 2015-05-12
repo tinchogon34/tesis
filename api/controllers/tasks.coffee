@@ -34,7 +34,7 @@ exports.addTask = (req, res) ->
       if not isValid
         return res.status(400).json { message: "Map and/or reduce function invalid" }
       available_slices = []
-      available_slices[i] = i for i in [0...req.body.slices.length]
+      available_slices[i] = i for i in [0...req.body.slices.length] if req.body.slices
       task = new Task(
         #data: req.body.data
         imap: "investigador_map = " + req.body.imap
@@ -80,7 +80,7 @@ exports.addData = (req, res) ->
     return res.status(422).json { message: "The task has already started"} if task.enabled_to_process
     return res.status(422).json { message: "The task has already finished"} if task.finished
     available_slices = []
-    available_slices[i] = (i+task.slices.length) for i in [0...req.body.slices.length]
+    available_slices[i] = (i+task.slices.length) for i in [0...req.body.slices.length] if req.body.slices
     task.available_slices = task.available_slices.concat available_slices
     task.slices = task.slices.concat req.body.slices
     task.save (err) ->
