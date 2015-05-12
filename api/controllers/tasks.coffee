@@ -33,11 +33,13 @@ exports.addTask = (req, res) ->
       isValid = output.result.indexOf("Error") < 0
       if not isValid
         return res.status(400).json { message: "Map and/or reduce function invalid" }
+      available_slices = []
+      available_slices[i] = i for i in [0...req.body.slices.length]
       task = new Task(
         #data: req.body.data
         imap: "investigador_map = " + req.body.imap
         ireduce: "investigador_reduce = " + req.body.ireduce
-        available_slices: req.body.available_slices or []
+        available_slices: available_slices
         slices: req.body.slices or []
         user: req.user._id
         enabled_to_process: false
