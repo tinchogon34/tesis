@@ -1,6 +1,7 @@
 mongoose = require("mongoose")
 Sandbox = require("sandbox")
 Task = mongoose.model("Task")
+beautify = require('js-beautify').js_beautify
 
 #GET - Devuelve un task con el ID especificado
 exports.findById = (req, res) ->
@@ -17,6 +18,10 @@ exports.findById = (req, res) ->
 exports.listTasks = (req, res) ->
   Task.find user: req.user._id, 'imap ireduce available_slices enabled_to_process finished', (err, tasks) ->
     return res.status(500).json { message: err.message } if err
+    tasks = tasks.map (task) ->
+      task.imap = beautify(task.imap, { indent_size: 2 })
+      task.ireduce = beautify(task.ireduce, { indent_size: 2 })
+      return task
     res.status(200).json tasks
     return
   return

@@ -73,11 +73,10 @@ sendData = (work, reducing, res) ->
   if work is null
     return res.status(404).send "Work not found"
 
-  if work.available_slices.length is 0 or work.finished
-      return res.json
-        status: "finished"
-
   if reducing
+    if work.finished
+      return res.json
+        status: "finished"      
     _data = _.sample(_.pairs(work.reduce_data))
     data = {}
     data[_data[0]] = _data[1]
@@ -86,6 +85,9 @@ sendData = (work, reducing, res) ->
       data: data
 
   else
+    if work.available_slices.length is 0
+        return res.json
+          status: "finished"
     _slice_id = _.sample work.available_slices
     return res.json
       slice_id: _slice_id
