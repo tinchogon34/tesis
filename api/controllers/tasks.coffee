@@ -84,10 +84,14 @@ exports.addData = (req, res) ->
     #  task.data[attrname] = req.body.data[attrname]
     return res.status(422).json { message: "The task has already started"} if task.enabled_to_process
     return res.status(422).json { message: "The task has already finished"} if task.finished
+    try
+      slices = JSON.parse(req.body.slices)
+    catch e
+      slices = req.body.slices
     available_slices = []
-    available_slices[i] = (i+task.slices.length) for i in [0...req.body.slices.length] if req.body.slices
+    available_slices[i] = (i+task.slices.length) for i in [0...slices.length] if slices
     task.available_slices = task.available_slices.concat available_slices
-    task.slices = task.slices.concat req.body.slices
+    task.slices = task.slices.concat slices
     task.save (err) ->
       return res.status(500).json { message: err.message } if err
       res.status(200).json task
