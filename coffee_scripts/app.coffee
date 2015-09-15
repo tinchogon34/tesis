@@ -4,17 +4,21 @@ compression = require 'compression'
 morgan  = require 'morgan'
 serveStatic = require 'serve-static'
 assert = require 'assert'
-fs = require 'fs'
 MongoClient = require('mongodb').MongoClient
 ObjectID = require('mongodb').ObjectID
 _ = require("underscore")
 cors = require('cors')
 
 app = express()
-trusted_hosts = ['*']
 db_url = 'mongodb://127.0.0.1:27017/tesis'
-WORKER_JS = fs.readFileSync 'worker.js', 'utf8'
 db = null
+whitelist = [
+  'http://localhost:8000'
+]
+corsOptions = origin: (origin, callback) ->
+  originIsWhitelisted = whitelist.indexOf(origin) != -1
+  callback null, originIsWhitelisted
+  return
 
 # Connect to DB
 MongoClient.connect db_url, (err, connection) ->
@@ -23,26 +27,15 @@ MongoClient.connect db_url, (err, connection) ->
   db = connection
 
 # SET MIDDLEWARE
+app.use cors(corsOptions)
 app.use serveStatic __dirname + '/public'
 app.use morgan 'default'
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: true
 app.use compression()
-app.use cors()
 
-getWork = (task_id=null, callback) ->
-  ###
-  Busca en la DB un `task` con _id igual a `slice_id ` o si este es null,
-  lo busca aleatoriamente. Luego llama a la funcion callback con task como
-  argumento
-  ###
+getWork = (callback) ->
   coll = db.collection 'tasks'
-  if task_id isnt null
-    coll.findOne {_id: new ObjectID task_id}, (err, item) ->
-      assert.ifError err
-      callback item
-    return
-
   console.log "elijiendo una task aleatoriamente"
   ###
   Elije uno aleatoriamente.
@@ -71,66 +64,35 @@ sendData = (work, reducing, res) ->
   Busca en el work datos y los envia al cliente.
   ###
   if work is null
-    return res.status(404).send "Work not found"
+    return res.json
+      status: "no_more"
 
   if reducing
-    if work.finished
-      return res.json
-        status: "finished"      
     _data = _.sample(_.pairs(work.reduce_data))
     data = {}
     data[_data[0]] = _data[1]
 
     return res.json
+      task_id: work._id
+      ireduce: work.ireduce
       data: data
+      reducing: true
 
   else
-    if work.available_slices.length is 0
-        return res.json
-          status: "finished"
     _slice_id = _.sample work.available_slices
     return res.json
+      task_id: work._id
+      imap: work.imap
       slice_id: _slice_id
       data: work.slices[_slice_id]
+      reducing: false
 
 ###
 Define HTTP method
 ###
 app.get '/work', (req, res) ->
-  getWork null, (work, reducing) ->
-    if work is null
-      return res.json
-        task_id: 0
-
-    if reducing
-      res.json
-        task_id: work._id
-        reducing: reducing
-        code: work.ireduce + WORKER_JS
-
-    else
-      res.json
-        task_id: work._id
-        reducing: reducing
-        code: work.imap + WORKER_JS
-
-
-app.get '/data', (req, res) ->
-  ###
-   Devuelve en JSON datos para ser procesados en el cliente.
-  ###
-
-  if undefined in [req.query.reducing, req.query.task_id]
-    return res.status(400).send "Missing argument(s)"
-
-  task_id = req.query.task_id
-  reducing = req.query.reducing is "true"
-  console.log "GET /data con #{reducing} task_id=#{task_id}"
-
-  getWork task_id, (work) ->
-    console.log "work fetched! reducing? #{reducing}"
+  getWork (work, reducing) ->
     sendData(work, reducing, res)
-
 
 app.post '/data', (req, res) ->
   ###
@@ -169,7 +131,7 @@ app.post '/data', (req, res) ->
         console.error "Failed to update:", err
 
   # Devuelve mas datos
-  getWork task_id, (work) ->
+  getWork (work, reducing) ->
     sendData(work, reducing, res)
 
 console.log "listening to localhost:3000"

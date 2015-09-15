@@ -9,13 +9,99 @@
   Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
 ####
 
+WORK_URL = 'http://tesis:3000/work'
+DATA_URL = 'http://tesis:3000/data'
+
+@cola = @result = null
+
+self.id = self.slice = self.fn = self.reducing = null
+
 # Aqui guarda los resultados la funcion `map`
 # Deben tener una estructura de Array[Array[2], Array[2], ...]
 result = []
 
+ajaxJSON = (path, callback, data = null) ->
+  xmlhttp = new XMLHttpRequest
+  xmlhttp.overrideMimeType 'application/json'
+
+  xmlhttp.onreadystatechange = ->
+    ready = xmlhttp.readyState == 4 and xmlhttp.status == 200
+    fail = xmlhttp.readyState == 4 and xmlhttp.status != 200
+    if ready
+      callback JSON.parse(xmlhttp.responseText), xmlhttp.statusText
+    else if fail
+      callback false, xmlhttp.statusText
+    return
+
+  if data
+    xmlhttp.open 'POST', path
+    xmlhttp.setRequestHeader 'Content-Type', 'application/json'
+    xmlhttp.send data
+  else
+    xmlhttp.open 'GET', path
+    xmlhttp.send()
+  return
+
+get_data = ->
+  # Trae datos del server y se los entrega al worker para que trabaje
+
+  ajaxJSON(WORK_URL, (json, status) =>
+    if json
+      prepare_data json
+      @cola.wake()
+    else
+      console.error "Cannot grab data from server #{status}"
+  )
+
+prepare_data = (json) ->
+  if json.status is "no_more"
+    postMessage
+      type: json.status
+
+  self.fn = self.slice = null
+  @cola.setData json.data
+  self.reducing = json.reducing
+  self.id = json.task_id
+  if self.reducing
+    self.fn = eval(json.ireduce)
+  else
+    self.fn = eval(json.imap)
+    self.slice = json.slice_id
+
+prepare_result = ->
+  ###
+  Antes de enviarlo al server hay que dejar el `result` preparar para
+  aplicarle el `reduce`
+  ###
+
+  res = {}
+  result.forEach (element) =>
+    if element.length isnt 2
+      console.error "Result mal formado en el worker", result
+      return
+
+    val = element.pop()
+    key = element.pop()
+    res[key] = [] unless result.hasOwnProperty key
+    res[key].push val
+  result = res
+
+send_result = () ->
+  prepare_result()
+  ajaxJSON DATA_URL, ((json, status) ->
+    if json
+      prepare_data json
+      @cola.wake()
+    return
+  ), JSON.stringify(
+    task_id: self.id
+    slice_id: self.slice
+    result: result
+    reducing: self.reducing)
+
 # General Porpouse functions
 self.log = (msg, others...) ->
-  console.log "[Worker] #{msg}", others...
+  #console.log "[Worker] #{msg}", others...
 
 self.error = (msg) ->
   console.error "[Worker] #{msg}"
@@ -44,17 +130,6 @@ class Cola
     @executing = false # TODO: se usa?
     @sleeping = true
     @_tout = null
-    @reducing = false
-
-    if self.investigador_map isnt undefined
-      @fn = self.investigador_map
-      log "El Web Worker será utilizado para *map*"
-    else if self.investigador_reduce isnt undefined
-      @fn = self.investigador_reduce
-      @reducing = true
-      log "El Web Worker será utilizado para *reduce*"
-    else
-      throw new Error("No se encontro la funcion *map* ni *reduce*")
 
   _process: () ->
     ###
@@ -68,7 +143,7 @@ class Cola
     @executing = true
     if @i < @_keys.length
       self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
-      @fn @_keys[@i], @_data[@_keys[@i]]
+      self.fn @_keys[@i], @_data[@_keys[@i]]
       @i++
 
     else  # termino de procesar.
@@ -95,9 +170,7 @@ class Cola
     ###
     self.log "_sendResult con ", result
 
-    postMessage
-      type: "send_result"
-      args: JSON.stringify result
+    send_result()
 
   setData: (data) ->
     self.log "setData"
@@ -117,30 +190,17 @@ class Cola
     clearTimeout @_tout
     @sleeping = true
 
-cola = new Cola()
+@cola = new Cola()
+get_data()
 @onmessage = (evnt) ->
   # Comunicación con `proc.js`.
 
   msg = evnt.data
   switch msg.type
-    when "start"
-      # En args tiene los datos. Es arr de arr [["0", 1], ...]
-      if not msg.args
-        self.error "Datos invalidos:", msg.args
-        return
-
-      self.log "start", msg.args
-      cola.setData msg.args
-      cola.wake()
-
     when "pause"
-      self.log "pause recv"
+      self.log "Pause received"
       cola.sleep()
 
     when "resume"
-      self.log "resumign recv"
+      self.log "Resuming received"
       cola.wake()
-
-# Avisar que esta listo para ejecutar las tareas.
-@postMessage
-  type: "ready"

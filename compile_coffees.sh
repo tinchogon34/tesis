@@ -8,10 +8,10 @@ coffee -o api/models/ -c api/models/*.coffee
 coffee -o api/controllers/ -c api/controllers/*.coffee
 
 #CORE coffees
-rm app.js reducer.js worker.js launch.js public/proc.js
+rm app.js reducer.js public/worker.js launch.js public/proc.js
 coffee -o . coffee_scripts/app.coffee
 coffee -o . coffee_scripts/reducer.coffee
-coffee -o . coffee_scripts/worker.coffee
+coffee -o public/ coffee_scripts/worker.coffee
 coffee -o . coffee_scripts/launch.coffee
 coffee -o public/ coffee_scripts/proc.coffee
 

@@ -9,7 +9,7 @@ assert = require 'assert'
 login_url = 'http://localhost:8080/login'
 tasks_url = 'http://localhost:8080/api/v1/tasks'
 task_results_url = 'http://localhost:8080/api/v1/task_results'
-file = './text'
+file = './text2'
 lr = new LineByLineReader(file)
 index = 0
 hash = {}
@@ -72,7 +72,7 @@ send_data = (data, enable = false) ->
   # el arreglo de available_slices correctamente y no empezar siempre del
   # indice 0
   #slices_count += slices.length
-  
+
   # Armo del objeto que voy a postear a la db con los nuevos datos del task
   json =
     #available_slices: available_slices
@@ -110,7 +110,7 @@ lr.on 'line', (line)->
     else
       send_data hash
     hash = {} # Limpio el hash para los proximos 100
-  else if index == numLines
+  else if (index+1) == numLines
     if Object.keys(hash).length > 0
       send_data hash, true
     else
@@ -133,8 +133,5 @@ fs.createReadStream(file).on('data', (chunk) ->
 
         createdTask = task # Guardo el task creado
         lr.resume()
-      ).auth null, null, true, token    
+      ).auth null, null, true, token
 )
-
-
-
