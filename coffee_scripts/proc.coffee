@@ -10,7 +10,7 @@ Solo se pide un Worker, que puede ser para mapear o reducir. Luego datos. Si se
 termina, termina todo.
 ###
 
-WORKERS_NUM = 4
+WORKERS_NUM = 16
 WORKERS = []
 MOBILE_IDLE_SECONDS = 10
 WORKER_CODE = null

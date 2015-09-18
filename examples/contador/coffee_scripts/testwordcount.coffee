@@ -1,6 +1,6 @@
 LineByLineReader = require 'line-by-line'
 fs = require 'fs'
-file = './text'
+file = './text2'
 lr = new LineByLineReader(file)
 word_count = 0
 numLines = 0
@@ -15,7 +15,7 @@ countWords = (text) ->
 lr.pause()
 lr.on 'line', (line)->
   word_count += countWords(line)
-  console.log word_count + " palabras" if index == numLines
+  console.log word_count + " palabras" if index+1 == numLines
   index++
 
 fs.createReadStream(file).on('data', (chunk) ->
