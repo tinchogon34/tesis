@@ -49,8 +49,9 @@ class ProcWorker
           slider = document.getElementsByName("workers-range")[0]
           slider.value = WORKERS.length
           slider.nextSibling.innerHTML = WORKERS.length
-        when "error"
-          console.error data.msg
+
+  postMessage: (msg) ->
+    @worker.postMessage msg
 
   terminate: ->
     @worker.terminate()
@@ -113,7 +114,8 @@ pause = ->
 
 # Start working!
 if typeof(Worker) isnt "undefined"
-  #console.log "Comienza proc.js"
+  console.log '%cComienza proc.js', 'background: #222; color: #bada55;font-size:40px;'
+  init()
   if /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     do inactivityTime = ->
       timeout = null
@@ -127,7 +129,5 @@ if typeof(Worker) isnt "undefined"
       window.addEventListener('touchstart', resetTimer, false);
       window.addEventListener('touchmove', resetTimer, false);
       window.addEventListener('touchend', resetTimer, false);
-  else
-    init()
 else
-  #console.log "Su navegador no soporta WebWorkers :("
+  console.error "Su navegador no soporta WebWorkers :("

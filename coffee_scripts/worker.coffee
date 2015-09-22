@@ -12,7 +12,7 @@
 WORK_URL = 'http://tesis:3000/work'
 DATA_URL = 'http://tesis:3000/data'
 
-@cola = @result = null
+@cola = null
 
 self.id = self.slice = self.fn = self.reducing = null
 
@@ -44,20 +44,22 @@ ajaxJSON = (path, callback, data = null) ->
 
 get_data = ->
   # Trae datos del server y se los entrega al worker para que trabaje
-
   ajaxJSON(WORK_URL, (json, status) =>
-    if json
-      prepare_data json
-      @cola.wake()
-    else
-      console.error "Cannot grab data from server #{status}"
+    process_response(json, status)
   )
 
-prepare_data = (json) ->
-  if json.status is "no_more"
-    postMessage
-      type: json.status
+process_response = (json) ->
+  if json
+    if json.status is "no_more"
+      postMessage
+        type: json.status
+      return
+    prepare_data json
+    @cola.wake()
+  else
+    console.error "Cannot grab data from server #{status}"
 
+prepare_data = (json) ->
   self.fn = self.slice = null
   @cola.setData json.data
   self.reducing = json.reducing
@@ -73,7 +75,6 @@ prepare_result = ->
   Antes de enviarlo al server hay que dejar el `result` preparar para
   aplicarle el `reduce`
   ###
-
   res = {}
   result.forEach (element) =>
     if element.length isnt 2
@@ -82,17 +83,14 @@ prepare_result = ->
 
     val = element.pop()
     key = element.pop()
-    res[key] = [] unless result.hasOwnProperty key
+    res[key] = [] unless res.hasOwnProperty key
     res[key].push val
   result = res
 
 send_result = () ->
   prepare_result()
   ajaxJSON DATA_URL, ((json, status) ->
-    if json
-      prepare_data json
-      @cola.wake()
-    return
+    process_response(json, status)
   ), JSON.stringify(
     task_id: self.id
     slice_id: self.slice
@@ -101,7 +99,7 @@ send_result = () ->
 
 # General Porpouse functions
 self.log = (msg, others...) ->
-  #console.log "[Worker] #{msg}", others...
+  console.log "[Worker] #{msg}", others...
 
 self.error = (msg) ->
   console.error "[Worker] #{msg}"
@@ -194,10 +192,10 @@ class Cola
 get_data()
 @onmessage = (evnt) ->
   # Comunicación con `proc.js`.
-
   msg = evnt.data
   switch msg.type
     when "pause"
+      console.log "Pause"
       self.log "Pause received"
       cola.sleep()
 

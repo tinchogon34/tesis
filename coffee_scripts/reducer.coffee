@@ -75,7 +75,6 @@ mode = (array) ->
 
   JSON.parse maxEl
 
-
 mapping = (task, coll) ->
   ###
   Prepara task para ser reducido.
@@ -90,13 +89,14 @@ mapping = (task, coll) ->
 
   # Obtengo la moda de los `maps_results` que tengan mas de 5 valores.
   for sid, res of results
-    if res.length >= 5
+    if res.length >= 5 and parseInt(sid) in task.available_slices
       _real_result[sid] = mode res
 
   if Object.keys(_real_result).length is 0
+    flag_mapper = true
     return
 
-  console.log("mapeando el taks #{task._id}."
+  console.log("mapeando el task #{task._id}."
     "Available_slices=#{task.available_slices.length}")
 
   # Busco los sids a eliminar de `available_slices`.
@@ -132,6 +132,7 @@ mapping = (task, coll) ->
   coll.update {_id: task._id}, _update, (err, count, status) ->
     assert.ifError err
     assert.strictEqual count, 1, "updated record #{count} != 1"
+    flag_mapper = true
 
 
 reducing = (task, coll, conn) ->
@@ -150,6 +151,7 @@ reducing = (task, coll, conn) ->
       results["results.#{key}"] = _real_result[key]
 
   if Object.keys(results).length is 0
+    flag_reducer = true
     return
 
   console.log "Esta siendo reducida el task_id: #{task._id}"
@@ -182,7 +184,8 @@ reducing = (task, coll, conn) ->
 
       coll.update {_id: task._id}, {$set: {finished: true}}, (err, count, status) ->
         assert.ifError err
-        assert.strictEqual count, 1, "updated record #{count} != 1"        
+        assert.strictEqual count, 1, "updated record #{count} != 1"
+        flag_reducer = true
       #coll.remove {_id: task._id}, (err, count) ->
       #  assert.ifError err
 
@@ -214,7 +217,6 @@ proccesor = (conn) ->
         return
 
       reducing task, coll, conn
-
 
 caller = (conn) ->
   ###

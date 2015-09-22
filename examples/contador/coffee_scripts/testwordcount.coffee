@@ -1,6 +1,6 @@
 LineByLineReader = require 'line-by-line'
 fs = require 'fs'
-file = './text2'
+file = './text'
 lr = new LineByLineReader(file)
 word_count = 0
 numLines = 0
