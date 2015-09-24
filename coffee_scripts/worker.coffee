@@ -9,8 +9,8 @@
   Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
 ####
 
-WORK_URL = 'http://tesis:3000/work'
-DATA_URL = 'http://tesis:3000/data'
+WORK_URL = 'http://tesis.office:3000/work'
+DATA_URL = 'http://tesis.office:3000/data'
 
 @cola = null
 

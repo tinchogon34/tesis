@@ -14,7 +14,7 @@ db_url = 'mongodb://127.0.0.1:27017/tesis'
 db = null
 whitelist = [
   'http://localhost:8000',
-  'http://tesis:8000'
+  'http://tesis.office:8000'
 ]
 corsOptions = origin: (origin, callback) ->
   originIsWhitelisted = whitelist.indexOf(origin) != -1

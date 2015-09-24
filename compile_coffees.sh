@@ -15,6 +15,10 @@ coffee -o public/ coffee_scripts/worker.coffee
 coffee -o . coffee_scripts/launch.coffee
 coffee -o public/ coffee_scripts/proc.coffee
 
+#VISUALIZER coffees
+rm visualizer/app.js
+coffee -o visualizer/ visualizer/coffee_scripts/app.coffee
+
 #EXAMPLES coffees
 rm examples/hash_crack/app.js examples/contador/app.js examples/contador/testwordcount.js
 coffee -o examples/hash_crack/ examples/hash_crack/coffee_scripts/app.coffee
