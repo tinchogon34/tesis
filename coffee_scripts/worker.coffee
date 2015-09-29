@@ -9,8 +9,8 @@
   Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
 ####
 
-WORK_URL = 'http://tesis.office:3000/work'
-DATA_URL = 'http://tesis.office:3000/data'
+WORK_URL = 'http://192.168.0.111:3000/work'
+DATA_URL = 'http://192.168.0.111:3000/data'
 
 @cola = null
 
@@ -99,7 +99,7 @@ send_result = () ->
 
 # General Porpouse functions
 self.log = (msg, others...) ->
-  console.log "[Worker] #{msg}", others...
+  #console.log "[Worker] #{msg}", others...
 
 self.error = (msg) ->
   console.error "[Worker] #{msg}"

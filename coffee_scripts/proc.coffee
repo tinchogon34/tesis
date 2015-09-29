@@ -10,11 +10,11 @@ Solo se pide un Worker, que puede ser para mapear o reducir. Luego datos. Si se
 termina, termina todo.
 ###
 
-WORKERS_NUM = 16
+WORKERS_NUM = navigator.hardwareConcurrency || 4
 WORKERS = []
 MOBILE_IDLE_SECONDS = 10
 WORKER_CODE = null
-WORKER_CODE_URL = "http://tesis.office:3000/worker.js"
+WORKER_CODE_URL = "http://192.168.0.111:3000/worker.js"
 
 callAjax = (url, callback) ->
   xmlhttp = undefined
@@ -84,7 +84,7 @@ createSlider = ->
   input.setAttribute("name","workers-range")
   input.className = "workers-range"
   input.setAttribute("min",0)
-  input.setAttribute("max",16)
+  input.setAttribute("max",navigator.hardwareConcurrency || 4)
   input.setAttribute("step",1)
   input.setAttribute("value",WORKERS_NUM)
   document.body.appendChild(outer_div)
