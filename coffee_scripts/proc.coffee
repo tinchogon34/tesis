@@ -93,6 +93,11 @@ createSlider = ->
      label.innerHTML = this.value
      refreshWorkers()
 
+injectSocketIoDependency = ->
+  #script = document.createElement("script")
+  #script.src = "https://cdn.socket.io/socket.io-1.3.5.js"
+  #document.body.appendChild(script)
+
 resume = ->
   for worker in WORKERS
     worker.postMessage
@@ -100,6 +105,7 @@ resume = ->
 
 init = ->
   return resume() if WORKER_CODE isnt null
+  injectSocketIoDependency()
   callAjax WORKER_CODE_URL, (res) ->
     WORKER_CODE = res
 

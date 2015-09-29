@@ -9,66 +9,45 @@
   Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
 ####
 
+importScripts("https://cdn.socket.io/socket.io-1.3.5.js")
+
 WORK_URL = 'http://192.168.0.111:3000/work'
 DATA_URL = 'http://192.168.0.111:3000/data'
+SOCKET_URL = 'http://192.168.0.111:3000'
 
 @cola = null
 
 self.id = self.slice = self.fn = self.reducing = null
-
+self.socket = io.connect(SOCKET_URL)
 # Aqui guarda los resultados la funcion `map`
 # Deben tener una estructura de Array[Array[2], Array[2], ...]
 result = []
 
-ajaxJSON = (path, callback, data = null) ->
-  xmlhttp = new XMLHttpRequest
-  xmlhttp.overrideMimeType 'application/json'
+self.socket.on 'finish', ->
+  postMessage
+    type: "no_more"
 
-  xmlhttp.onreadystatechange = ->
-    ready = xmlhttp.readyState == 4 and xmlhttp.status == 200
-    fail = xmlhttp.readyState == 4 and xmlhttp.status != 200
-    if ready
-      callback JSON.parse(xmlhttp.responseText), xmlhttp.statusText
-    else if fail
-      callback false, xmlhttp.statusText
-    return
-
-  if data
-    xmlhttp.open 'POST', path
-    xmlhttp.setRequestHeader 'Content-Type', 'application/json'
-    xmlhttp.send data
-  else
-    xmlhttp.open 'GET', path
-    xmlhttp.send()
-  return
+self.socket.on 'new_work', (data) ->
+  process_response(data)
 
 get_data = ->
   # Trae datos del server y se los entrega al worker para que trabaje
-  ajaxJSON(WORK_URL, (json, status) =>
-    process_response(json, status)
-  )
+  self.socket.emit 'ready'
 
-process_response = (json) ->
-  if json
-    if json.status is "no_more"
-      postMessage
-        type: json.status
-      return
-    prepare_data json
-    @cola.wake()
-  else
-    console.error "Cannot grab data from server #{status}"
+process_response = (data) ->
+  prepare_data data
+  @cola.wake()
 
-prepare_data = (json) ->
+prepare_data = (data) ->
   self.fn = self.slice = null
-  @cola.setData json.data
-  self.reducing = json.reducing
-  self.id = json.task_id
+  @cola.setData data.data
+  self.reducing = data.reducing
+  self.id = data.task_id
   if self.reducing
-    self.fn = eval(json.ireduce)
+    self.fn = eval(data.ireduce)
   else
-    self.fn = eval(json.imap)
-    self.slice = json.slice_id
+    self.fn = eval(data.imap)
+    self.slice = data.slice_id
 
 prepare_result = ->
   ###
@@ -89,13 +68,11 @@ prepare_result = ->
 
 send_result = () ->
   prepare_result()
-  ajaxJSON DATA_URL, ((json, status) ->
-    process_response(json, status)
-  ), JSON.stringify(
+  self.socket.emit 'work_results',
     task_id: self.id
     slice_id: self.slice
     result: result
-    reducing: self.reducing)
+    reducing: self.reducing
 
 # General Porpouse functions
 self.log = (msg, others...) ->
