@@ -11,14 +11,15 @@
 
 importScripts("https://cdn.socket.io/socket.io-1.3.5.js")
 
-WORK_URL = 'http://192.168.0.111:3000/work'
-DATA_URL = 'http://192.168.0.111:3000/data'
-SOCKET_URL = 'http://192.168.0.111:3000'
+WORK_URL = 'http://10.0.0.120:3000/work'
+DATA_URL = 'http://10.0.0.120:3000/data'
+SOCKET_URL = 'http://10.0.0.120:3000'
 
 @cola = null
 
 self.id = self.slice = self.fn = self.reducing = null
-self.socket = io.connect(SOCKET_URL)
+self.socket = io.connect SOCKET_URL,
+  transports: [ 'websocket' ]
 # Aqui guarda los resultados la funcion `map`
 # Deben tener una estructura de Array[Array[2], Array[2], ...]
 result = []

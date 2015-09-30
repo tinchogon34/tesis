@@ -20,7 +20,7 @@ io.adapter(redis({ host: 'localhost', port: 6379 }))
 db_url = 'mongodb://127.0.0.1:27017/tesis'
 db = null
 whitelist = [
-  'http://192.168.0.111:8000',
+  'http://10.0.0.120:8000',
   'http://localhost:8000',
   'http://tesis.office:8000'
 ]
@@ -64,19 +64,19 @@ workers = ->
             callback item, false
           )
 
-  sendData = (work, reducing, req) ->
+  sendData = (work, reducing, client) ->
     ###
     Busca en el work datos y los envia al cliente.
     ###
     if work is null
-      return req.io.emit 'finish'
+      return client.emit 'finish'
 
     if reducing
       _data = _.sample(_.pairs(work.reduce_data))
       data = {}
       data[_data[0]] = _data[1]
 
-      return req.io.emit 'new_work',
+      return client.emit 'new_work',
         task_id: work._id
         ireduce: work.ireduce
         data: data
@@ -84,7 +84,7 @@ workers = ->
 
     else
       _slice_id = _.sample work.available_slices
-      return req.io.emit 'new_work',
+      return client.emit 'new_work',
         task_id: work._id
         imap: work.imap
         slice_id: _slice_id
@@ -133,15 +133,19 @@ workers = ->
       getWork (work, reducing) ->
         sendData(work, reducing, client)
 
-  server.listen(3000)
-  console.log "listening to localhost:3000"
-
-if cluster.isMaster
   # Connect to DB
   MongoClient.connect db_url, (err, connection) ->
     assert.ifError err
     assert.ok connection
     db = connection
-    cluster.fork() for [0...numCPUs]
+
+    server.listen(3000)
+    console.log "listening to localhost:3000"
+
+if cluster.isMaster
+  cluster.fork() for [0...numCPUs]
+  cluster.on 'exit', (worker) ->
+    console.log "Worker died :("
+    cluster.fork()
 else
   workers()
