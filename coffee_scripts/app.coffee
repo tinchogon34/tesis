@@ -20,7 +20,7 @@ io.adapter(redis({ host: 'localhost', port: 6379 }))
 db_url = 'mongodb://127.0.0.1:27017/tesis'
 db = null
 whitelist = [
-  'http://10.0.0.120:8000',
+  'http://tesis.office:8000',
   'http://localhost:8000',
   'http://tesis.office:8000'
 ]

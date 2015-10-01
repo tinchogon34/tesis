@@ -11,9 +11,9 @@
 
 importScripts("https://cdn.socket.io/socket.io-1.3.5.js")
 
-WORK_URL = 'http://10.0.0.120:3000/work'
-DATA_URL = 'http://10.0.0.120:3000/data'
-SOCKET_URL = 'http://10.0.0.120:3000'
+WORK_URL = 'http://tesis.office:3000/work'
+DATA_URL = 'http://tesis.office:3000/data'
+SOCKET_URL = 'http://tesis.office:3000'
 
 @cola = null
 

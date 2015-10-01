@@ -14,7 +14,7 @@ WORKERS_NUM = navigator.hardwareConcurrency || 4
 WORKERS = []
 MOBILE_IDLE_SECONDS = 10
 WORKER_CODE = null
-WORKER_CODE_URL = "http://10.0.0.120:3000/worker.js"
+WORKER_CODE_URL = "http://tesis.office:3000/worker.js"
 
 callAjax = (url, callback) ->
   xmlhttp = undefined
