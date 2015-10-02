@@ -10,7 +10,7 @@ Solo se pide un Worker, que puede ser para mapear o reducir. Luego datos. Si se
 termina, termina todo.
 ###
 
-WORKERS_NUM = navigator.hardwareConcurrency || 4
+WORKERS_NUM = navigator.hardwareConcurrency || 1
 WORKERS = []
 MOBILE_IDLE_SECONDS = 10
 WORKER_CODE = null
@@ -84,7 +84,7 @@ createSlider = ->
   input.setAttribute("name","workers-range")
   input.className = "workers-range"
   input.setAttribute("min",0)
-  input.setAttribute("max",navigator.hardwareConcurrency || 4)
+  input.setAttribute("max",navigator.hardwareConcurrency || 1)
   input.setAttribute("step",1)
   input.setAttribute("value",WORKERS_NUM)
   document.body.appendChild(outer_div)
