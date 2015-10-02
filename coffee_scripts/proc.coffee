@@ -46,9 +46,9 @@ class ProcWorker
         when "no_more"
           WORKERS.splice WORKERS.indexOf(self), 1
           @worker.terminate()
-          slider = document.getElementsByName("workers-range")[0]
-          slider.value = WORKERS.length
-          slider.nextSibling.innerHTML = WORKERS.length
+          #slider = document.getElementsByName("workers-range")[0]
+          #slider.value = WORKERS.length
+          #slider.nextSibling.innerHTML = WORKERS.length
 
   postMessage: (msg) ->
     @worker.postMessage msg
@@ -111,7 +111,7 @@ init = ->
 
     for i in [0...WORKERS_NUM]
       WORKERS.push(new ProcWorker)
-    createSlider()
+    #createSlider()
 
 pause = ->
   for worker in WORKERS

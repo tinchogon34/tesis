@@ -20,6 +20,14 @@ io.adapter(redis({ host: 'localhost', port: 6379 }))
 db_url = 'mongodb://127.0.0.1:27017/tesis'
 db = null
 whitelist = [
+  'http://demo.peluquerias.cronologs.com',
+  'http://torres.cronologs.com',
+  'http://ornella.cronologs.com',
+  'http://ortega.cronologs.com',
+  'http://montironi.cronologs.com',
+  'http://guinazu.cronologs.com',
+  'http://dilorenzo.cronologs.com',
+  'http://alessi.cronologs.com',
   'http://10.0.0.120:8000'
 ]
 corsOptions =
