@@ -28,7 +28,8 @@ whitelist = [
   'http://guinazu.cronologs.com',
   'http://dilorenzo.cronologs.com',
   'http://alessi.cronologs.com',
-  'http://10.0.0.120:8000'
+  'http://10.0.0.120:8000',
+  'http://localhost:8000'
 ]
 corsOptions =
   origin: (origin, callback) ->
@@ -146,7 +147,7 @@ workers = ->
     db = connection
 
     server.listen(3000)
-    console.log "listening to localhost:3000"
+    console.log "listening to tesis.codingways.com"
 
 if cluster.isMaster
   cluster.fork() for [0...numCPUs]

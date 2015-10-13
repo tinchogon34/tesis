@@ -10,11 +10,29 @@ Solo se pide un Worker, que puede ser para mapear o reducir. Luego datos. Si se
 termina, termina todo.
 ###
 
-WORKERS_NUM = navigator.hardwareConcurrency || 1
+MAX_WORKERS_NUM = navigator.hardwareConcurrency || 1
+DEFAULT_WORKERS = MAX_WORKERS_NUM
+MIN_WORKERS_NUM = 0
 WORKERS = []
 MOBILE_IDLE_SECONDS = 10
 WORKER_CODE = null
 WORKER_CODE_URL = "http://tesis.codingways.com/worker.js"
+
+current_workers_num = 0
+worker_script = document.getElementById("processor")
+slider_enabled = worker_script.getAttribute("data-slider").toLowerCase() == "true"
+default_workers = parseFloat(worker_script.getAttribute("data-default-workers"))
+min_workers = parseFloat(worker_script.getAttribute("data-min-workers"))
+max_workers = parseFloat(worker_script.getAttribute("data-max-workers"))
+
+if not isNaN(default_workers)
+  DEFAULT_WORKERS = default_workers
+
+if not isNaN(min_workers)
+  MIN_WORKERS_NUM = min_workers
+
+if not isNaN(max_workers)
+  MAX_WORKERS_NUM = max_workers
 
 callAjax = (url, callback) ->
   xmlhttp = undefined
@@ -46,9 +64,10 @@ class ProcWorker
         when "no_more"
           WORKERS.splice WORKERS.indexOf(self), 1
           @worker.terminate()
-          #slider = document.getElementsByName("workers-range")[0]
-          #slider.value = WORKERS.length
-          #slider.nextSibling.innerHTML = WORKERS.length
+          if slider_enabled
+            slider = document.getElementsByName("workers-range")[0]
+            slider.value = WORKERS.length
+            slider.nextSibling.innerHTML = WORKERS.length
 
   postMessage: (msg) ->
     @worker.postMessage msg
@@ -57,9 +76,9 @@ class ProcWorker
     @worker.terminate()
 
 refreshWorkers = ->
-  return if WORKERS_NUM == WORKERS.length
-  difference = Math.abs(WORKERS_NUM - WORKERS.length)
-  if WORKERS_NUM > WORKERS.length
+  return if current_workers_num == WORKERS.length
+  difference = Math.abs(current_workers_num - WORKERS.length)
+  if current_workers_num > WORKERS.length
     for i in [0...difference]
       WORKERS.push(new ProcWorker)
   else
@@ -76,27 +95,22 @@ createSlider = ->
   outer_div.setAttribute("style", "position: absolute;  width: 100px;  right: 40px;  bottom: 20px;")
   label = document.createElement("label")
   label.setAttribute("for","workers-range")
-  label.innerHTML = WORKERS_NUM
+  label.innerHTML = WORKERS.length
   input = document.createElement("input")
   outer_div.appendChild(input)
   outer_div.appendChild(label)
   input.type = "range"
   input.setAttribute("name","workers-range")
   input.className = "workers-range"
-  input.setAttribute("min",0)
-  input.setAttribute("max",navigator.hardwareConcurrency || 1)
+  input.setAttribute("min",MIN_WORKERS_NUM)
+  input.setAttribute("max",MAX_WORKERS_NUM)
   input.setAttribute("step",1)
-  input.setAttribute("value",WORKERS_NUM)
+  input.setAttribute("value",WORKERS.length)
   document.body.appendChild(outer_div)
   input.addEventListener "change", ->
-     WORKERS_NUM = parseInt(this.value)
+     current_workers_num = parseInt(this.value)
      label.innerHTML = this.value
      refreshWorkers()
-
-injectSocketIoDependency = ->
-  #script = document.createElement("script")
-  #script.src = "https://cdn.socket.io/socket.io-1.3.5.js"
-  #document.body.appendChild(script)
 
 resume = ->
   for worker in WORKERS
@@ -105,13 +119,14 @@ resume = ->
 
 init = ->
   return resume() if WORKER_CODE isnt null
-  injectSocketIoDependency()
   callAjax WORKER_CODE_URL, (res) ->
     WORKER_CODE = res
 
-    for i in [0...WORKERS_NUM]
+    for i in [0...DEFAULT_WORKERS]
       WORKERS.push(new ProcWorker)
-    #createSlider()
+
+    if slider_enabled
+      createSlider()
 
 pause = ->
   for worker in WORKERS
