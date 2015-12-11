@@ -23,50 +23,48 @@ compile_coffees.on 'exit', (code) ->
         fs.appendFile 'logs/api.error.log', data, null
       setTimeout(->
         console.log "running example"
-        example = spawn 'node', ['app.js'], {cwd: 'examples/contador'}
+        example = spawn 'node', ['app.js'], {cwd: 'examples/stopwords_tf'}
         example.on 'exit', (code) ->
-          example = spawn 'node', ['app.js'], {cwd: 'examples/contador'}
-          example.on 'exit', (code) ->
-            console.log "server started on port 3000"
-            fs.truncate 'logs/core.log', 0, ->
-              return
-            fs.truncate 'logs/core.error.log', 0, ->
-              return
-            core = spawn 'node', ['app.js']
-            core.stdout.on 'data', (data) ->
-              fs.appendFile 'logs/core.log', data, null
-            core.stderr.on 'data', (data) ->
-              fs.appendFile 'logs/core.error.log', data, null
-            core.on 'exit', (code) ->
-              console.log "core exit with code: " + code
+          console.log "server started on port 3000"
+          fs.truncate 'logs/core.log', 0, ->
+            return
+          fs.truncate 'logs/core.error.log', 0, ->
+            return
+          core = spawn 'node', ['app.js']
+          core.stdout.on 'data', (data) ->
+            fs.appendFile 'logs/core.log', data, null
+          core.stderr.on 'data', (data) ->
+            fs.appendFile 'logs/core.error.log', data, null
+          core.on 'exit', (code) ->
+            console.log "core exit with code: " + code
 
-            console.log "reducer started"
-            fs.truncate 'logs/reducer.log', 0, ->
-              return
-            fs.truncate 'logs/reducer.error.log', 0, ->
-              return
-            lock = spawn 'rm', ['.tesis.lock'], {cwd: '/var/tmp'}
-            lock.on 'exit', (code) ->
-              reducer = spawn 'node', ['reducer.js']
-              reducer.stdout.on 'data', (data) ->
-                fs.appendFile 'logs/reducer.log', data, null
-              reducer.stderr.on 'data', (data) ->
-                fs.appendFile 'logs/reducer.error.log', data, null
-              reducer.on 'exit', (code) ->
-                console.log "reducer exit with code: " + code
+          console.log "reducer started"
+          fs.truncate 'logs/reducer.log', 0, ->
+            return
+          fs.truncate 'logs/reducer.error.log', 0, ->
+            return
+          lock = spawn 'rm', ['.tesis.lock'], {cwd: '/var/tmp'}
+          lock.on 'exit', (code) ->
+            reducer = spawn 'node', ['reducer.js']
+            reducer.stdout.on 'data', (data) ->
+              fs.appendFile 'logs/reducer.log', data, null
+            reducer.stderr.on 'data', (data) ->
+              fs.appendFile 'logs/reducer.error.log', data, null
+            reducer.on 'exit', (code) ->
+              console.log "reducer exit with code: " + code
 
-              console.log "client started on port 8000"
-              fs.truncate 'logs/client.log', 0, ->
-                return
-              fs.truncate 'logs/client.error.log', 0, ->
-                return
-              client = spawn './start.sh', [], {cwd: 'client'}
-              client.stdout.on 'data', (data) ->
-                fs.appendFile 'logs/client.log', data, null
-              client.on 'exit', (code) ->
-                console.log "client exit: " + code
-              client.stderr.on 'data', (data) ->
-                fs.appendFile 'logs/client.error.log', data, null
+            console.log "client started on port 8000"
+            fs.truncate 'logs/client.log', 0, ->
+              return
+            fs.truncate 'logs/client.error.log', 0, ->
+              return
+            client = spawn './start.sh', [], {cwd: 'client'}
+            client.stdout.on 'data', (data) ->
+              fs.appendFile 'logs/client.log', data, null
+            client.on 'exit', (code) ->
+              console.log "client exit: " + code
+            client.stderr.on 'data', (data) ->
+              fs.appendFile 'logs/client.error.log', data, null
       ,5000)
 
 process.stdin.resume()

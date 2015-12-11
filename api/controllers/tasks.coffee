@@ -35,6 +35,7 @@ exports.addTask = (req, res) ->
     throw new Error if req.body.ireduce.indexOf("importScript") >= 0 or req.body.ireduce.indexOf("XMLHttpRequest") >= 0
     s = new Sandbox()
     s.run imap+';'+ireduce, (output) ->
+      console.log output
       isValid = output.result.indexOf("Error") < 0
       if not isValid
         return res.status(400).json { message: "Map and/or reduce function invalid" }

@@ -52,5 +52,5 @@ MongoClient.connect(url, function(err, conn) {
             console.log("Inserted elements: ", result.length);
             conn.close();
         });
-    });            
+    });
 });

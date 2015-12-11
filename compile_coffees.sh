@@ -20,7 +20,18 @@ rm visualizer/app.js
 coffee -o visualizer/ visualizer/coffee_scripts/app.coffee
 
 #EXAMPLES coffees
-rm examples/hash_crack/app.js examples/contador/app.js examples/contador/testwordcount.js
-coffee -o examples/hash_crack/ examples/hash_crack/coffee_scripts/app.coffee
+rm examples/contador/app.js examples/contador/testwordcount.js
 coffee -o examples/contador/ examples/contador/coffee_scripts/app.coffee
 coffee -o examples/contador/ examples/contador/coffee_scripts/testwordcount.coffee
+
+rm examples/primos/app.js
+coffee -o examples/primos/ examples/primos/coffee_scripts/app.coffee
+
+rm examples/eng_stopwords/app.js
+coffee -o examples/eng_stopwords/ examples/eng_stopwords/coffee_scripts/app.coffee
+
+rm examples/tf/app.js
+coffee -o examples/tf/ examples/tf/coffee_scripts/app.coffee
+
+rm examples/stopwords_tf/app.js
+coffee -o examples/stopwords_tf/ examples/stopwords_tf/coffee_scripts/app.coffee
