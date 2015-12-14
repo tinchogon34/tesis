@@ -65,7 +65,7 @@ get_slices = (data, size) ->
 
 send_data = (data, enable = false) ->
   # Divido los datos de un solo hash en un array de hashes de 50 elementos c/u
-  slices = get_slices(data, 100)
+  slices = get_slices(data, 500)
   #available_slices = []
 
   # Armo un array de slices disponibles con la cantidad de elementos que tengo
@@ -107,7 +107,7 @@ enable_to_process = ->
 lr.pause()
 lr.on 'line', (line)->
   hash[index] = line if !!line # { 0: linea1, 1: linea2, .....}
-  if (index+1) % 100 == 0  # Si ya lei 100 lineas...
+  if (index+1) % 500 == 0  # Si ya lei 100 lineas...
     lr.pause() # Pauso la lectura del archivo
     if index == numLines
       send_data hash, true # Mando los datos

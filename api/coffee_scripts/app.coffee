@@ -36,7 +36,7 @@ usersController = require('./controllers/users')
 
 # SET MIDDLEWARE
 app.use morgan 'default'
-app.use bodyParser.json()
+app.use bodyParser.json({limit: '50mb'})
 app.use bodyParser.urlencoded extended: true
 app.use cors()
 app.use '/api', expressjwt({secret: SECRET})
