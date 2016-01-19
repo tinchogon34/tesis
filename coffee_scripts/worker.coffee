@@ -9,11 +9,11 @@
   Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
 ####
 
-importScripts("http://10.0.0.120:3000/socket.io-1.3.5.js")
+importScripts("http://10.0.0.69:3002/socket.io-1.3.5.js")
 
-WORK_URL = 'http://10.0.0.120:3000/work'
-DATA_URL = 'http://10.0.0.120:3000/data'
-SOCKET_URL = 'http://10.0.0.120:3000'
+WORK_URL = 'http://10.0.0.69:3002/work'
+DATA_URL = 'http://10.0.0.69:3002/data'
+SOCKET_URL = 'http://10.0.0.69:3002'
 
 @cola = null
 

@@ -16,7 +16,7 @@ MIN_WORKERS_NUM = 0
 WORKERS = []
 MOBILE_IDLE_SECONDS = 10
 WORKER_CODE = null
-WORKER_CODE_URL = "http://10.0.0.120:3000/worker.js"
+WORKER_CODE_URL = "http://10.0.0.69:3002/worker.js"
 
 current_workers_num = 0
 worker_script = document.getElementById("processor")

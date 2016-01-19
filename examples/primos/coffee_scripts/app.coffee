@@ -4,9 +4,9 @@ assert = require 'assert'
 # Para que no importe que el certificado https no sea firmado
 #process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-login_url = 'http://localhost:8080/login'
-tasks_url = 'http://localhost:8080/api/v1/tasks'
-task_results_url = 'http://localhost:8080/api/v1/task_results'
+login_url = 'http://localhost:3003/login'
+tasks_url = 'http://localhost:3003/api/v1/tasks'
+task_results_url = 'http://localhost:3003/api/v1/task_results'
 
 # Guarda el token que se devuelve cuando se logea con las credenciales
 # correctas, luego es el que se utiliza para hacer los requests

@@ -1,4 +1,4 @@
-exports = module.exports = (app, mongoose) ->
+exports = module.exports = (app, mongoose, conn) ->
 	taskResultSchema = new mongoose.Schema({
     result: mongoose.Schema.Types.Mixed
     task:
@@ -9,4 +9,4 @@ exports = module.exports = (app, mongoose) ->
       ref: 'User'
     }, minimize: false)
 
-	mongoose.model 'TaskResult', taskResultSchema, 'task_results'
+	conn.model 'TaskResult', taskResultSchema, 'task_results'

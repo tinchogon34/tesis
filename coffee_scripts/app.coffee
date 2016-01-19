@@ -18,10 +18,13 @@ numCPUs = require('os').cpus().length
 io.adapter(redis({ host: 'localhost', port: 6379 }))
 
 db_url = 'mongodb://127.0.0.1:27017/tesis'
+meteorurl = 'mongodb://127.0.0.1:3001/meteor'
+
 db = null
+db2 = null
 whitelist = [
   'http://codingways.com',
-  'http://10.0.0.120:8000',
+  'http://10.0.0.69:8000',
   'http://localhost:8000'
 ]
 corsOptions =
@@ -35,7 +38,7 @@ workers = ->
   # SET MIDDLEWARE
   app.use cors(corsOptions)
   app.use(express.static(__dirname + '/public'));
-  app.use morgan 'default'
+  app.use morgan 'combined'
   app.use bodyParser.json()
   app.use bodyParser.urlencoded extended: true
   app.use compression()
@@ -122,12 +125,26 @@ workers = ->
 
       # Realiza la llamada a la DB
       coll = db.collection 'tasks'
-      coll.update {
+      logs = db2.collection 'Tasks'
+      coll.findAndModify {
         _id: new ObjectID(task_id)},
+        [['_id',1]],
         {$push: update},
-        (err) ->
+        {new: true},
+        (err, task) ->
           if err isnt null
             console.error "Failed to update:", err
+          else
+            map_results = {}
+            for k,v of task.map_results
+              map_results[k] = v.length
+
+            logs.update {
+              task: new ObjectID(task_id)},
+              {$set: {map_results: map_results, reduce_results: task.reduce_results, reducing: reducing} },
+              (err) ->
+                if err isnt null
+                  console.error "Failed to update:", err
 
       # Devuelve mas datos
       getWork (work, reducing) ->
@@ -139,8 +156,14 @@ workers = ->
     assert.ok connection
     db = connection
 
-    server.listen(3000)
-    console.log "listening to 192.168.1.2:3000"
+    # Connect to DB
+    MongoClient.connect meteorurl, (err, connection) ->
+      assert.ifError err
+      assert.ok connection
+      db2 = connection
+
+      server.listen(3002)
+      console.log "listening to 192.168.1.2:3002"
 
 if cluster.isMaster
   cluster.fork() for [0...numCPUs]

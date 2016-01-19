@@ -3,10 +3,10 @@ assert = require 'assert'
 
 #process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-login_url = 'http://localhost:8080/login'
-dummy_url = 'http://localhost:8080/api/v1/dummy'
-tasks_url = 'http://localhost:8080/api/v1/tasks'
-task_results_url = 'http://localhost:8080/api/v1/task_results'
+login_url = 'http://localhost:3003/login'
+dummy_url = 'http://localhost:3003/api/v1/dummy'
+tasks_url = 'http://localhost:3003/api/v1/tasks'
+task_results_url = 'http://localhost:3003/api/v1/task_results'
 fake_token = 'faketoken'
 
 newTask =

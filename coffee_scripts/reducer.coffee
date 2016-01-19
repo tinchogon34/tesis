@@ -13,6 +13,7 @@ _ = require "underscore"
 fs = require "fs"
 
 DB_URL = 'mongodb://127.0.0.1:27017/tesis'
+METEOR_URL = 'mongodb://127.0.0.1:3001/meteor'
 MAPPED = "this.available_slices.length > 0 && this.enabled_to_process && !this.finished"
 REDUCING = "this.available_slices.length === 0 && this.enabled_to_process && !this.finished"
 LOCK_PATH = "/var/tmp/.tesis.lock"
@@ -34,20 +35,23 @@ catch Error
   fs.writeSync fd, "foobar"
   fs.closeSync fd
 
-
 MongoClient.connect DB_URL, (err, conn) ->
   assert.ifError err
   console.log "Conección exitosa a la BD."
 
-  # close connection when SIGINTerrupted
-  process.on 'SIGINT', (err) ->
-    conn.close()
-    fs.unlink LOCK_PATH
-    console.log "Goodbye ;)"
-    process.exit 0
+  MongoClient.connect METEOR_URL, (err, conn2) ->
+    assert.ifError err
+    console.log "Conección exitosa a la BD."
 
-  caller(conn)
+    # close connection when SIGINTerrupted
+    process.on 'SIGINT', (err) ->
+      conn.close()
+      conn2.close()
+      fs.unlink LOCK_PATH
+      console.log "Goodbye ;)"
+      process.exit 0
 
+    caller(conn, conn2)
 
 mode = (array) ->
   ###
@@ -75,7 +79,7 @@ mode = (array) ->
 
   JSON.parse maxEl
 
-mapping = (task, coll) ->
+mapping = (task, coll, conn, conn2) ->
   ###
   Prepara task para ser reducido.
 
@@ -129,13 +133,22 @@ mapping = (task, coll) ->
     }
 
   # Ejecuto la consulta
-  coll.update {_id: task._id}, _update, (err, count, status) ->
+  logs = conn2.collection "Tasks"
+
+  coll.findAndModify {_id: task._id}, [['_id',1]], _update, {new: true}, (err, task) ->
     assert.ifError err
-    assert.strictEqual count, 1, "updated record #{count} != 1"
-    flag_mapper = true
+    map_results = {}
+    reduce_data = {}
+    for k,v of task.map_results
+      map_results[k] = v.length
+    for k,v of task.reduce_data
+      reduce_data[k] = v.length
+    logs.update {task: task._id}, {$set: {available_slices: task.available_slices,map_results: map_results, reduce_data: reduce_data}}, (err) ->
+      assert.ifError err
+      flag_mapper = true
 
 
-reducing = (task, coll, conn) ->
+reducing = (task, coll, conn, conn2) ->
   ###
   Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se
   termino la tarea. De ser asi, es movido a `task_results`.
@@ -165,10 +178,13 @@ reducing = (task, coll, conn) ->
     $set: results
 
   # Ejecuto la consulta
-  coll.update {_id: task._id}, _update, (err, count, status) ->
-    assert.ifError err
-    assert.strictEqual count, 1, "updated record #{count} != 1"
+  logs = conn2.collection "Tasks"
 
+  coll.findAndModify {_id: task._id}, [['_id',1]], _update, {new: true}, (err, task) ->
+    assert.ifError err
+
+    logs.update {task: task._id}, {$set: {reduce_results: task.reduce_results, results: task.results}}, (err) ->
+      assert.ifError err
   if _.difference(
     Object.keys(task.reduce_results),
     Object.keys(_real_result)).length is 0
@@ -185,12 +201,14 @@ reducing = (task, coll, conn) ->
       coll.update {_id: task._id}, {$set: {finished: true}}, (err, count, status) ->
         assert.ifError err
         assert.strictEqual count, 1, "updated record #{count} != 1"
-        flag_reducer = true
+        logs.update {task: task._id}, {$set: {enabled_to_process: false}}, (err) ->
+          assert.ifError err
+          flag_reducer = true
       #coll.remove {_id: task._id}, (err, count) ->
       #  assert.ifError err
 
 
-proccesor = (conn) ->
+proccesor = (conn, conn2) ->
   ###
   Reduce o mapea las task de la bd, seteando correctamente los flags.
   ###
@@ -205,7 +223,7 @@ proccesor = (conn) ->
         flag_mapper = true
         return
 
-      mapping task, coll
+      mapping task, coll, conn, conn2
 
   if flag_reducer
     flag_reducer = false
@@ -216,9 +234,9 @@ proccesor = (conn) ->
         flag_reducer = true
         return
 
-      reducing task, coll, conn
+      reducing task, coll, conn, conn2
 
-caller = (conn) ->
+caller = (conn, conn2) ->
   ###
   Verifica que todas las tareas de `proccesor` terminen. Si lo estan, lo
   ejecuta de vuelta, si no se duerme.
@@ -226,5 +244,5 @@ caller = (conn) ->
 
   flags = flag_mapper or flag_reducer
   if flags
-    proccesor(conn)
-  setTimeout(caller, 3000, conn)
+    proccesor(conn, conn2)
+  setTimeout(caller, 3000, conn, conn2)

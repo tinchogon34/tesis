@@ -114,6 +114,7 @@ assert = require('assert'),
 _ = require("underscore"),
 RECORDS = options.records || 10,
 url = 'mongodb://localhost:27017/tesis',
+meteordb = 'mongodb://localhost:3001/meteor',
 obj = null
 
 switch(options.type) {
@@ -134,6 +135,14 @@ MongoClient.connect(url, function(err, conn) {
   var tasks = conn.collection("tasks"),
   arr = []
   if (options.clean) {
+    MongoClient.connect(meteordb, function(err, conn) {
+      conn.collection("Tasks").remove({}, function(err, result) {
+        assert.ifError(err)
+        console.log("DB Tasks (Meteor) Cleaned")
+        conn.close()
+      })
+    })
+
     tasks.remove({}, function(err, result) {
       assert.ifError(err)
       console.log("DB Tasks Cleaned")
@@ -149,7 +158,6 @@ MongoClient.connect(url, function(err, conn) {
         })
       })
     })
-
 
   }
   if(RECORDS <= 0){

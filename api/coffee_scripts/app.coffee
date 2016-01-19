@@ -14,7 +14,8 @@ fs = require 'fs'
 cors = require('cors')
 
 app = express()
-db_url = 'mongodb://localhost/tesis'
+db_url = 'mongodb://localhost:27017/tesis'
+meteor = 'mongodb://localhost:3001/meteor'
 db = null
 SECRET = '0239f0j3924ufm28j4y9f23842yf3984'
 #options =
@@ -23,19 +24,23 @@ SECRET = '0239f0j3924ufm28j4y9f23842yf3984'
 
 
 # Connect to DB
-mongoose.connect db_url, (err, connection) ->
-  assert.ifError err
+#mongoose.connect db_url, (err, connection) ->
+#  assert.ifError err
+
+conn      = mongoose.createConnection(db_url);
+conn2     = mongoose.createConnection(meteor);
 
 #Import models and controllers
-taskModel = require('./models/task')(app, mongoose)
-userModel = require('./models/user')(app, mongoose)
-taskResultModel = require('./models/task_result')(app, mongoose)
-tasksController = require('./controllers/tasks')
-taskResultsController = require('./controllers/taskResults')
-usersController = require('./controllers/users')
+taskModel = require('./models/task')(app, mongoose, conn)
+userModel = require('./models/user')(app, mongoose, conn)
+taskResultModel = require('./models/task_result')(app, mongoose, conn)
+coreLogModel = require('./models/core_logs')(app, mongoose, conn2)
+tasksController = require('./controllers/tasks')(conn, conn2)
+taskResultsController = require('./controllers/taskResults')(conn)
+usersController = require('./controllers/users')(conn)
 
 # SET MIDDLEWARE
-app.use morgan 'default'
+app.use morgan 'combined'
 app.use bodyParser.json({limit: '50mb'})
 app.use bodyParser.urlencoded extended: true
 app.use cors()
@@ -63,5 +68,5 @@ app.post '/login', usersController.loginWithCredentials
 app.post '/register', usersController.register
 app.get '/api/v1/users/logged', usersController.getLoggedUser
 
-#httpsServer.listen '8080'
-app.listen '8080'
+#httpsServer.listen '3003'
+app.listen '3003'

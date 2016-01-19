@@ -1,4 +1,4 @@
-exports = module.exports = (app, mongoose) ->
+exports = module.exports = (app, mongoose, conn) ->
 	userSchema = new mongoose.Schema({
     name: String
     lastname: String
@@ -8,4 +8,4 @@ exports = module.exports = (app, mongoose) ->
 		minimize: false
 	)
 
-	mongoose.model 'User', userSchema
+	conn.model 'User', userSchema

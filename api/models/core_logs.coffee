@@ -1,18 +1,18 @@
 exports = module.exports = (app, mongoose, conn) ->
-	taskSchema = new mongoose.Schema({
-		#data: mongoose.Schema.Types.Mixed
-		imap: String
-		ireduce: String
+	coreLogsSchema = new mongoose.Schema({
+    task:
+      type: mongoose.Schema.Types.ObjectId
+      ref: 'Task'
+    reducing: Boolean
+    enabled_to_process: Boolean
 		map_results: { type: mongoose.Schema.Types.Mixed, default: {} }
 		reduce_data: { type: mongoose.Schema.Types.Mixed, default: {} }
 		reduce_results: { type: mongoose.Schema.Types.Mixed, default: {} }
+		results: { type: mongoose.Schema.Types.Mixed, default: {} }
 		available_slices: { type: [Number], default: [] }
-		slices: { type: [mongoose.Schema.Types.Mixed], default: [] }
-		user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-		enabled_to_process: Boolean
-		finished: Boolean
+		slices: Number
 	},
 		minimize: false
 	)
 
-	conn.model 'Task', taskSchema
+	conn.model 'CoreLog', coreLogsSchema, 'Tasks'

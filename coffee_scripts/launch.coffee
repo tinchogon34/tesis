@@ -5,13 +5,15 @@ api = core = reducer = client = null
 console.log "compiling coffees"
 compile_coffees = spawn './compile_coffees.sh'
 compile_coffees.on 'exit', (code) ->
+  console.log "starting meteor"
+  meteor = spawn 'meteor', [], {cwd: 'viewer'}
   console.log "cleaning db"
   init_db = spawn 'node', ['init_db.js', '-c', '-r', '0']
   init_db.on 'exit', (code) ->
     console.log "init api started"
     init_api_db = spawn 'node', ['init_api_db.js'], {cwd: 'api'}
     init_api_db.on 'exit', (code) ->
-      console.log "api started on port 8080"
+      console.log "api started on port 3003"
       api = spawn 'node', ['app.js'], {cwd: 'api'}
       fs.truncate 'logs/api.log', 0, ->
         return
@@ -23,9 +25,9 @@ compile_coffees.on 'exit', (code) ->
         fs.appendFile 'logs/api.error.log', data, null
       setTimeout(->
         console.log "running example"
-        example = spawn 'node', ['app.js'], {cwd: 'examples/stopwords_tf'}
+        example = spawn 'node', ['app.js'], {cwd: 'examples/contador'}
         example.on 'exit', (code) ->
-          console.log "server started on port 3000"
+          console.log "server started on port 3002"
           fs.truncate 'logs/core.log', 0, ->
             return
           fs.truncate 'logs/core.error.log', 0, ->
