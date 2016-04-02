@@ -6,49 +6,42 @@
   Realiza las llamadas a `map` o `reduce` teniendo en cuenta de no hacer un
   uso *intensivo* de los recursos del cliente.
 
-  Se comunica con `proc.js` para recibir los datos y enviarle los resultados.
-####
+  Se comunica con `proc.js` para avisar cuando ya ha terminado, o para que este
+  le diga cuando pausarse o resumirse.
+###
 
-importScripts("http://10.0.0.69:3002/socket.io-1.3.5.js")
+HOST_CONFIG = {host: "localhost", port: "3002"}
+HOST_URL = "http://"+HOST_CONFIG.host+":"+HOST_CONFIG.port
+importScripts(HOST_URL+"/socket.io-1.3.5.js")
 
-WORK_URL = 'http://10.0.0.69:3002/work'
-DATA_URL = 'http://10.0.0.69:3002/data'
-SOCKET_URL = 'http://10.0.0.69:3002'
+WORK_URL = HOST_URL+"/work"
+DATA_URL = HOST_URL+"/data"
+SOCKET_URL = HOST_URL
 
-@cola = null
+cola = id = slice = fn = reducing = socket = null
 
-self.id = self.slice = self.fn = self.reducing = null
-self.socket = io.connect SOCKET_URL,
-  transports: [ 'websocket' ]
 # Aqui guarda los resultados la funcion `map`
 # Deben tener una estructura de Array[Array[2], Array[2], ...]
 result = []
 
-self.socket.on 'finish', ->
-  postMessage
-    type: "no_more"
-
-self.socket.on 'new_work', (data) ->
-  process_response(data)
-
 get_data = ->
-  # Trae datos del server y se los entrega al worker para que trabaje
-  self.socket.emit 'ready'
+  # Le avisa al servidor que esta listo para recibir datos
+  socket.emit 'ready'
 
 process_response = (data) ->
   prepare_data data
-  @cola.wake()
+  cola.wake()
 
 prepare_data = (data) ->
-  self.fn = self.slice = null
-  @cola.setData data.data
-  self.reducing = data.reducing
-  self.id = data.task_id
-  if self.reducing
-    self.fn = eval(data.ireduce)
+  fn = slice = null
+  cola.setData data.data
+  reducing = data.reducing
+  id = data.task_id
+  if reducing
+    fn = eval(data.ireduce)
   else
-    self.fn = eval(data.imap)
-    self.slice = data.slice_id
+    fn = eval(data.imap)
+    slice = data.slice_id
 
 prepare_result = ->
   ###
@@ -69,15 +62,15 @@ prepare_result = ->
 
 send_result = () ->
   prepare_result()
-  self.socket.emit 'work_results',
-    task_id: self.id
-    slice_id: self.slice
+  socket.emit 'work_results',
+    task_id: id
+    slice_id: slice
     result: result
-    reducing: self.reducing
+    reducing: reducing
 
 # General Porpouse functions
 self.log = (msg, others...) ->
-  #console.log "[Worker] #{msg}", others...
+  console.log "[Worker] #{msg}", others...
 
 self.error = (msg) ->
   console.error "[Worker] #{msg}"
@@ -91,7 +84,6 @@ self.emit = (key, val) ->
   self.log "emit con #{key} #{val}"
   result.push [key, val]
 
-
 class Cola
   ###
   Realizar las llamadas a `map` o `reduce`. Se duerme `this.sleeping` ms y
@@ -103,7 +95,7 @@ class Cola
     @i = 0
     @_data = null
     @_keys = null
-    @executing = false # TODO: se usa?
+    @executing = false
     @sleeping = true
     @_tout = null
 
@@ -119,7 +111,7 @@ class Cola
     @executing = true
     if @i < @_keys.length
       self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
-      self.fn @_keys[@i], @_data[@_keys[@i]]
+      fn @_keys[@i], @_data[@_keys[@i]]
       @i++
 
     else  # termino de procesar.
@@ -137,13 +129,6 @@ class Cola
   _sendResult: () ->
     self.log "_sendResult"
     @sleep()
-    # TODO: Aparente esta de mas, borrarlo
-    ###
-    # create a copy
-    _result = []
-    result.forEach (item) ->
-      _result.push item.slice()
-    ###
     self.log "_sendResult con ", result
 
     send_result()
@@ -166,17 +151,35 @@ class Cola
     clearTimeout @_tout
     @sleeping = true
 
-@cola = new Cola()
-get_data()
-@onmessage = (evnt) ->
+cola = new Cola()
+
+# Crea una conexion por WebSockets al servidor
+socket = io.connect SOCKET_URL,
+  transports: [ 'websocket' ]
+
+# Cuando me conecto por primera vez, pido datos
+socket.on 'connect', ->
+  get_data()
+
+# Cuando recibo un mensaje finish del servidor, le aviso a proc.js que este
+# worker ya termino
+socket.on 'finish', ->
+  postMessage
+    type: "no_more"
+
+# Cuando recibo un mensaje new_work del servidor, proceso los datos
+socket.on 'new_work', (data) ->
+  process_response(data)
+
+# Maneja los mensajes enviados desde proc.js al worker
+onmessage = (evnt) ->
   # Comunicación con `proc.js`.
   msg = evnt.data
   switch msg.type
-    when "pause"
-      console.log "Pause"
+    when "pause" # Usado para pausar el trabajo del worker en mobile
       self.log "Pause received"
       cola.sleep()
 
-    when "resume"
+    when "resume" # Usado para resumir el trabajo del worker en mobile
       self.log "Resuming received"
       cola.wake()
