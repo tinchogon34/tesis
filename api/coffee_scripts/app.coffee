@@ -27,8 +27,10 @@ SECRET = '0239f0j3924ufm28j4y9f23842yf3984'
 #mongoose.connect db_url, (err, connection) ->
 #  assert.ifError err
 
-conn      = mongoose.createConnection(db_url);
-conn2     = mongoose.createConnection(meteor);
+mongoose.Promise = global.Promise;
+
+conn      = mongoose.createConnection(db_url)
+conn2     = mongoose.createConnection(meteor)
 
 #Import models and controllers
 taskModel = require('./models/task')(app, mongoose, conn)

@@ -13,7 +13,7 @@ module.exports = (conn) ->
       return res.status(500).json { message: err.message } if err
       if user # Si encontro un usuario con ese username
         if bcrypt.compareSync(req.body.password, user.password_hash) # Si las passwords coinciden
-          token = jwt.sign user, SECRET, { expiresInMinutes: 60*5 } # Genero token
+          token = jwt.sign user.toObject(), SECRET, { expiresIn: '1h' } # Genero token
           return res.status(200).json { token: token }
       return res.status(401).json { message: 'Wrong user or password' }
     return

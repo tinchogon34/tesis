@@ -31,8 +31,6 @@ io.adapter(redis(REDIS_DB_CONFIG))
 
 # Listado de hosts que pueden hacer CORS
 WHITELIST = [
-  'http://codingways.com',
-  'http://192.168.0.105:8000',
   'http://localhost:8000'
 ]
 
@@ -143,12 +141,12 @@ workers = ->
       tasks_collection = mongo_db.collection 'tasks'
       meteor_tasks_collection = meteor_db.collection 'Tasks'
 
-      tasks_collection.findAndModify {
+      tasks_collection.findOneAndUpdate {
         _id: new ObjectID(task_id)},
-        [['_id',1]],
         {$push: update},
-        {new: true},
-        (err, task) ->
+        {returnOriginal: false},
+        (err, doc) ->
+          task = doc.value
           if err isnt null
             console.error "Fallo al actualizar:", err
           else
@@ -157,7 +155,7 @@ workers = ->
             for k,v of task.map_results
               map_results[k] = v.length
 
-            meteor_tasks_collection.update {
+            meteor_tasks_collection.findOneAndUpdate {
               task: new ObjectID(task_id)},
               {$set: {map_results: map_results, reduce_results: task.reduce_results, reducing: reducing} },
               (err) ->

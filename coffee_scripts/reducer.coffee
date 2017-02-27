@@ -135,7 +135,8 @@ mapping = (task, coll, conn, conn2) ->
   # Ejecuto la consulta
   logs = conn2.collection "Tasks"
 
-  coll.findAndModify {_id: task._id}, [['_id',1]], _update, {new: true}, (err, task) ->
+  coll.findOneAndUpdate {_id: task._id}, _update, {returnOriginal: false}, (err, doc) ->
+    task = doc.value
     assert.ifError err
     map_results = {}
     reduce_data = {}
@@ -143,7 +144,7 @@ mapping = (task, coll, conn, conn2) ->
       map_results[k] = v.length
     for k,v of task.reduce_data
       reduce_data[k] = v.length
-    logs.update {task: task._id}, {$set: {available_slices: task.available_slices,map_results: map_results, reduce_data: reduce_data}}, (err) ->
+    logs.updateOne {task: task._id}, {$set: {available_slices: task.available_slices,map_results: map_results, reduce_data: reduce_data}}, (err) ->
       assert.ifError err
       flag_mapper = true
 
@@ -180,10 +181,11 @@ reducing = (task, coll, conn, conn2) ->
   # Ejecuto la consulta
   logs = conn2.collection "Tasks"
 
-  coll.findAndModify {_id: task._id}, [['_id',1]], _update, {new: true}, (err, task) ->
+  coll.findOneAndUpdate {_id: task._id}, _update, {returnOriginal: false}, (err, doc) ->
+    task = doc.value
     assert.ifError err
 
-    logs.update {task: task._id}, {$set: {reduce_results: task.reduce_results, results: task.results}}, (err) ->
+    logs.updateOne {task: task._id}, {$set: {reduce_results: task.reduce_results, results: task.results}}, (err) ->
       assert.ifError err
   if _.difference(
     Object.keys(task.reduce_results),
@@ -195,13 +197,13 @@ reducing = (task, coll, conn, conn2) ->
       result: _real_result
       user: task.user
       task: task._id
-    task_results.insert [task_result], (err, result) ->
+    task_results.insertOne task_result, (err, result) ->
       assert.ifError err
 
-      coll.update {_id: task._id}, {$set: {finished: true}}, (err, count, status) ->
+      coll.updateOne {_id: task._id}, {$set: {finished: true}}, (err, result) ->
         assert.ifError err
-        assert.strictEqual count, 1, "updated record #{count} != 1"
-        logs.update {task: task._id}, {$set: {enabled_to_process: false}}, (err) ->
+        assert.strictEqual result.result.n, 1, "updated record #{result.result.n} != 1"
+        logs.updateOne {task: task._id}, {$set: {enabled_to_process: false}}, (err) ->
           assert.ifError err
           flag_reducer = true
       #coll.remove {_id: task._id}, (err, count) ->
