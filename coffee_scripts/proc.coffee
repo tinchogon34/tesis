@@ -7,12 +7,12 @@ Es el intermediador entre el Web Worker (hilo que se ejecuta en el cliente) y el
 servidor de Tareas.
 ###
 
-HOST_CONFIG = {host: "localhost", port: "3002"}
+HOST_CONFIG = {host: "192.168.1.242", port: "3002"}
 HOST_URL = "http://"+HOST_CONFIG.host+":"+HOST_CONFIG.port
 # Por defecto el maximo de workers es la cantidad de procesadores
-MAX_WORKERS_NUM = navigator.hardwareConcurrency || 1
-DEFAULT_WORKERS = MAX_WORKERS_NUM
+DEFAULT_WORKERS = 1
 MIN_WORKERS_NUM = 0
+MAX_WORKERS_NUM = 1
 WORKERS = []
 # Tiempo muerto de espera en mobile para empezar a procesar
 MOBILE_IDLE_SECONDS = 10
@@ -24,9 +24,9 @@ current_workers_num = 0
 # Obtengo parametros desde la página que incluye este script
 worker_script = document.getElementById("processor")
 slider_enabled = worker_script.getAttribute("data-slider").toLowerCase() == "true"
-default_workers = parseFloat(worker_script.getAttribute("data-default-workers"))
-min_workers = parseFloat(worker_script.getAttribute("data-min-workers"))
-max_workers = parseFloat(worker_script.getAttribute("data-max-workers"))
+default_workers = if worker_script.getAttribute("data-default-workers") == "max" then navigator.hardwareConcurrency or 1 else parseFloat(worker_script.getAttribute("data-default-workers"))
+min_workers = if worker_script.getAttribute("data-min-workers") == "max" then navigator.hardwareConcurrency or 0 else parseFloat(worker_script.getAttribute("data-min-workers"))
+max_workers = if worker_script.getAttribute("data-max-workers") == "max" then navigator.hardwareConcurrency or 1 else parseFloat(worker_script.getAttribute("data-max-workers"))
 
 # Si hay algun parametro, reemplazo los valores por defecto
 if not isNaN(default_workers)
@@ -148,7 +148,6 @@ init = ->
 # Start working!
 if typeof(Worker) isnt "undefined"
   console.log '%cComienza proc.js', 'background: #222; color: #bada55;font-size:40px;'
-  init()
   # Si es una plataforma mobile esperar cierto tiempo sin tocar la pantalla para empezar a procesar
   if /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     do inactivityTime = ->
@@ -163,5 +162,7 @@ if typeof(Worker) isnt "undefined"
       window.addEventListener('touchstart', resetTimer, false);
       window.addEventListener('touchmove', resetTimer, false);
       window.addEventListener('touchend', resetTimer, false);
+  else
+    init()
 else
   console.error "Su navegador no soporta WebWorkers :("

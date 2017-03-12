@@ -31,7 +31,8 @@ io.adapter(redis(REDIS_DB_CONFIG))
 
 # Listado de hosts que pueden hacer CORS
 WHITELIST = [
-  'http://localhost:8000'
+  'http://localhost:8000',
+  'http://192.168.1.242:8000',
 ]
 
 mongo_db = null

@@ -31,7 +31,7 @@ compile_coffees.on 'exit', (code) ->
             fs.appendFile 'logs/api.error.log', data, null
           setTimeout(->
             console.log "Corriendo ejemplo"
-            example = spawn 'node', ['app.js'], {cwd: 'examples/contador'}
+            example = spawn 'node', ['app.js'], {cwd: 'examples/stopwords_tf'}
             example.on 'exit', (code) ->
               console.log "Server iniciado y escuchando en puerto " + SERVER_PORT.toString()
               fs.truncate 'logs/core.log', 0, ->

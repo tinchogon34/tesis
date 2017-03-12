@@ -184,30 +184,33 @@ reducing = (task, coll, conn, conn2) ->
   coll.findOneAndUpdate {_id: task._id}, _update, {returnOriginal: false}, (err, doc) ->
     task = doc.value
     assert.ifError err
+    reduce_results = {}
+    for k,v of task.reduce_results
+      reduce_results[k] = v.length
 
-    logs.updateOne {task: task._id}, {$set: {reduce_results: task.reduce_results, results: task.results}}, (err) ->
+    logs.updateOne {task: task._id}, {$set: {reduce_results: reduce_results, results: task.results}}, (err) ->
       assert.ifError err
-  if _.difference(
-    Object.keys(task.reduce_results),
-    Object.keys(_real_result)).length is 0
-    console.log "termino completamente el task #{task._id}"
+      if _.difference(
+        Object.keys(task.reduce_results),
+        Object.keys(_real_result)).length is 0
+        console.log "termino completamente el task #{task._id}"
 
-    task_results = conn.collection "task_results"
-    task_result =
-      result: _real_result
-      user: task.user
-      task: task._id
-    task_results.insertOne task_result, (err, result) ->
-      assert.ifError err
-
-      coll.updateOne {_id: task._id}, {$set: {finished: true}}, (err, result) ->
-        assert.ifError err
-        assert.strictEqual result.result.n, 1, "updated record #{result.result.n} != 1"
-        logs.updateOne {task: task._id}, {$set: {enabled_to_process: false}}, (err) ->
+        task_results = conn.collection "task_results"
+        task_result =
+          result: _real_result
+          user: task.user
+          task: task._id
+        task_results.insertOne task_result, (err, result) ->
           assert.ifError err
-          flag_reducer = true
-      #coll.remove {_id: task._id}, (err, count) ->
-      #  assert.ifError err
+
+          coll.updateOne {_id: task._id}, {$set: {finished: true}}, (err, result) ->
+            assert.ifError err
+            assert.strictEqual result.result.n, 1, "updated record #{result.result.n} != 1"
+            logs.updateOne {task: task._id}, {$set: {enabled_to_process: false}}, (err) ->
+              assert.ifError err
+              flag_reducer = true
+          #coll.remove {_id: task._id}, (err, count) ->
+          #  assert.ifError err
 
 
 proccesor = (conn, conn2) ->
