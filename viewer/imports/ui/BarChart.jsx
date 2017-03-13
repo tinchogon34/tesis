@@ -1,5 +1,8 @@
-BarChart = React.createClass({
-  componentDidMount: function() {
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom'
+
+class BarChart extends Component {
+  componentDidMount() {
     var el = ReactDOM.findDOMNode(this); // This is de div we are rendering
     var svg = d3.select(el)
     .append("svg")
@@ -7,19 +10,13 @@ BarChart = React.createClass({
     .attr("height", this.props.height);
 
     this.updateChart(this.props);
-  },
+  }
 
-  componentWillUpdate: function(nextProps) {
+  componentWillUpdate(nextProps) {
     this.updateChart(nextProps);
-  },
+  }
 
-  getDefaultProps: function() {
-    return {
-      width: 640,
-      height: 200
-    }
-  },
-  updateChart: function(props) {
+  updateChart(props) {
 	    var data = props.data;
 	    var max = _.max(_.pluck(data,"value"));
   		var yScale = d3.scale.linear()
@@ -90,10 +87,18 @@ BarChart = React.createClass({
 	    	  .attr("y", function(d, i) {
 	    	  	return props.height - 5;
 	    	  });
-	},
-  render: function() {
+	}
+
+  render() {
     return (
       <div className="chart"></div>
     );
   }
-});
+}
+
+BarChart.defaultProps = {
+  width: 640,
+  height: 200
+};
+
+export default BarChart

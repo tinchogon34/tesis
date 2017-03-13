@@ -1,13 +1,13 @@
-App = React.createClass({
-	mixins: [ReactMeteorData],
-
-	getMeteorData() {
-		return {
-			tasks: Tasks.find({}).fetch()
-		}
-	},
-
-	mapResultsData(task){
+import React, { Component, PropTypes } from 'react';
+import { createContainer } from 'meteor/react-meteor-data';
+ 
+import { Tasks } from '../api/tasks.js';
+ 
+import BarChart from './BarChart.jsx';
+ 
+// App component - represents the whole app
+class App extends Component { 
+  mapResultsData(task){
 		if(!task.slices || !task.map_results) return []
 		var res = []
 		for(var i=0;i < task.slices;i++){
@@ -23,7 +23,7 @@ App = React.createClass({
 
 		}
 		return res;
-	},
+	}
 
 	reduceDataData(task){
 		if(!task.reduce_data) return []
@@ -36,7 +36,7 @@ App = React.createClass({
 			}
 		}
 		return res;
-	},
+	}
 
 	reduceResultsData(task){
 		if(!task.reduce_results) return []
@@ -50,7 +50,7 @@ App = React.createClass({
 				}
 		}
 		return res;
-	},
+	}
 
 	resultsData(task){
 		if(!task.results) return []
@@ -64,10 +64,10 @@ App = React.createClass({
 			}
 		}
 		return res;
-	},
+	}
 
-	renderTasks(){
-		return this.data.tasks.map((task) => {
+  renderTasks() {
+    return this.props.tasks.map((task) => {
 			return (
 				<div className="row" key={task._id.toString()}>
 					<div className="col-md-12">
@@ -107,24 +107,33 @@ App = React.createClass({
 				</div>
 			);
 		});
-	},
-
-	render: function() {
+  }
+ 
+  render() {
 		return (
 			<div>
 				<div className="page-header">
 					<center>
 						<h1>
 							<i className="fa fa-beer"></i> Tesis
-								<small> Dashboard</small>
-							</h1>
-						</center>
-					</div>
+              <small> Dashboard</small>
+            </h1>
+          </center>
+        </div>
+        <div className="container-fluid">
+          {this.renderTasks()}
+        </div>
+      </div>
+    );
+  }
+}
 
-					<div className="container-fluid">
-						{this.renderTasks()}
-					</div>
-				</div>
-			);
-		}
-	});
+App.propTypes = {
+  tasks: PropTypes.array.isRequired,
+};
+ 
+export default createContainer(() => {
+  return {
+    tasks: Tasks.find({}).fetch(),
+  };
+}, App);

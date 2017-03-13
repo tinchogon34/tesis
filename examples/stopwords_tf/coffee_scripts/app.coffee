@@ -1,4 +1,4 @@
-# awk '{gsub(/[.,]/, ""); for (i = 1; i <= NF; i++) {w = tolower($i); count[w]++; words[w] = w}} END {qty = asort(words); for (w = 1; w <= qty; w++) print words[w] "@" count[words[w]]}' text
+# sed -e 's/[^[:alpha:]]/ /g' anillos | tr '\n' " " |  tr -s " " | tr " " '\n'| tr 'A-Z' 'a-z' | sort | uniq -c | sort -nr | nl | head -n 50
 
 LineByLineReader = require 'line-by-line'
 fs = require 'fs'
@@ -11,7 +11,7 @@ assert = require 'assert'
 login_url = 'http://localhost:3003/login'
 tasks_url = 'http://localhost:3003/api/v1/tasks'
 task_results_url = 'http://localhost:3003/api/v1/task_results'
-file = './text'
+file = './anillos'
 lr = new LineByLineReader(file)
 index = 0
 hash = {}
