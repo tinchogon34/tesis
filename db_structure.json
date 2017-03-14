@@ -1,0 +1,35 @@
+{
+  "slices":[
+    {
+      "0" : "De los Hobbits",
+      "1" : "Este libro trata principalmente de los Hobbits, y el lector descubrirá en",
+      "2" : "sus páginas mucho del carácter y algo de la historia de este pueblo. Podrá",
+      "3" : "encontrarse más información en los extractos del Libro Rojo de la Frontera del",
+      "4" : "Oeste que ya han sido publicados con el título de El Hobbit. El relato tuvo su",
+      "5" : "origen en los primeros capítulos del Libro Rojo, compuesto por Bilbo Bolsón -el",
+      "6" : "primer Hobbit que fue famoso en el mundo entero - y que él tituló Historia de",
+      "7" : "una ida y de una vuelta, pues contaba el viaje de Bilbo hacia el Este y la vuelta,",
+      "8" : "aventura que más tarde enredaría a todos los Hobbits en los importantes",
+      "9" : "acontecimientos que aquí se relatan"
+	  }
+  ],
+  "available_slices": [0],
+  "enabled_to_process": true,
+  "finished": false,
+  "map_results": {
+    "0" : [
+      {
+        "hobbits" : [1,1,1],
+        "libro" : [1,1,1],
+        "trata" : [1],
+        ......
+      },
+      {
+        "hobbits" : [1,1,1],
+        "libro" : [1,1,1],
+        "trata" : [1],
+        ......
+      },
+    ]
+  }
+}

@@ -32,7 +32,6 @@ io.adapter(redis(REDIS_DB_CONFIG))
 # Listado de hosts que pueden hacer CORS
 WHITELIST = [
   'http://localhost:8000',
-  'http://192.168.1.242:8000',
 ]
 
 mongo_db = null
@@ -57,7 +56,6 @@ workers = ->
 
   getWork = (callback) ->
     tasks_collection = mongo_db.collection 'tasks'
-    console.log "Elijiendo una task aleatoriamente"
     ###
     Elije uno aleatoriamente.
     Si hay un Task listo para reducir tiene mayor prioridad.
@@ -65,6 +63,7 @@ workers = ->
     tasks_collection.find(REDUCING_QUERY).count (err, _n) ->
       assert.ifError err
       if _n isnt 0
+        console.log "Elijiendo una task aleatoriamente para reducir"
         tasks_collection.find(REDUCING_QUERY).limit(1).skip(_.random(_n - 1)).nextObject((err, task) ->
           assert.ifError err
           callback task, true
@@ -73,7 +72,9 @@ workers = ->
         tasks_collection.find(MAPPING_QUERY).count (err, _n) ->
           assert.ifError err
           if _n is 0
+            console.log "No hay mas tasks :)"
             return callback null
+          console.log "Elijiendo una task aleatoriamente para mapear"
           tasks_collection.find(MAPPING_QUERY).limit(1).skip(_.random(_n - 1)).nextObject((err, task) ->
             assert.ifError err
             callback task, false
@@ -126,7 +127,7 @@ workers = ->
       reducing = data.reducing
       task_id = data.task_id
 
-      # Prepara el obj para actulizar a DB
+      # Prepara el obj para actualizar la DB
       # Si esta siendo reducido guardo en reduce_results
       if reducing
         update = {}
@@ -147,18 +148,13 @@ workers = ->
         {$push: update},
         {returnOriginal: false},
         (err, doc) ->
-          task = doc.value
-          if err isnt null
-            console.error "Fallo al actualizar:", err
-          else
+          if not err and doc.value
+            task = doc.value
             # Preparo los datos para actualizar la DB de Meteor
-            map_results = {}
-            for k,v of task.map_results
-              map_results[k] = v.length
 
             meteor_tasks_collection.findOneAndUpdate {
               task: new ObjectID(task_id)},
-              {$set: {map_results: map_results, reduce_results: task.reduce_results, reducing: reducing} },
+              {$set: {map_results: task.map_results, reduce_results: task.reduce_results, reducing: reducing} },
               (err) ->
                 if err isnt null
                   console.error "Fallo al actualizar:", err

@@ -7,7 +7,7 @@ Es el intermediador entre el Web Worker (hilo que se ejecuta en el cliente) y el
 servidor de Tareas.
 ###
 
-HOST_CONFIG = {host: "192.168.1.242", port: "3002"}
+HOST_CONFIG = {host: "localhost", port: "3002"}
 HOST_URL = "http://"+HOST_CONFIG.host+":"+HOST_CONFIG.port
 # Por defecto el maximo de workers es la cantidad de procesadores
 DEFAULT_WORKERS = 1

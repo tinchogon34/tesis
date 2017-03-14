@@ -10,7 +10,7 @@
   le diga cuando pausarse o resumirse.
 ###
 
-HOST_CONFIG = {host: "192.168.1.242", port: "3002"}
+HOST_CONFIG = {host: "localhost", port: "3002"}
 HOST_URL = "http://"+HOST_CONFIG.host+":"+HOST_CONFIG.port
 importScripts(HOST_URL+"/socket.io-1.3.5.js")
 

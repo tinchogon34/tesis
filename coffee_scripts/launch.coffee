@@ -74,8 +74,8 @@ compile_coffees.on 'exit', (code) ->
                 client.stderr.on 'data', (data) ->
                   fs.appendFile 'logs/client.error.log', data, null
           ,5000)
-    ,20000)
-  ,10000)
+    ,5000)
+  ,5000)
 process.stdin.resume()
 process.on 'SIGINT', ->
   api.kill() if api

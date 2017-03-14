@@ -136,6 +136,7 @@ newTask =
             "esta",
             "estas",
             "estaba",
+            "estabas",
             "estado",
             "estáis",
             "estamos",
@@ -153,6 +154,9 @@ newTask =
             "fuimos",
             "gueno",
             "ha",
+            "había",
+            "habían",
+            "habías",
             "hace",
             "haces",
             "hacéis",
@@ -219,6 +223,7 @@ newTask =
             "nuestras",
             "nuestros",
             "nunca",
+            "o",
             "os",
             "otra",
             "otro",
@@ -364,38 +369,40 @@ newTask =
             "yo"
         );
 
+        cleansed_string = cleansed_string.toLowerCase();
+        cleansed_string = cleansed_string.replace(/\\n/g, " ");
+        cleansed_string = cleansed_string.replace(/[^ 0-9a-z\\u00E0-\\u00FC]/g," ");
+        cleansed_string = cleansed_string.replace(/\\s\\s+/g, " ");
+        cleansed_string = cleansed_string.replace(/^\\s+|\\s+$/g, "");
+
         words = cleansed_string.split(" ");
 
         if(words.length == 1 && words[0] == ""){
           return "";
         }
-        for(x=0; x < words.length; x++) {
-            word = words[x].toLowerCase().replace(/[^0-9a-z-]/g,"");
-            for(y=0; y < stop_words.length; y++) {
-                stop_word = stop_words[y];
-                if(word == stop_word) {
-                    regex = new RegExp("\\\\b"+words[x]+"\\\\b","ig");
-                    cleansed_string = cleansed_string.replace(regex, "");
-                }
-            }
+        
+        for(x=0; x < stop_words.length; x++) {
+            stop_word = stop_words[x];
+            regex = new RegExp("(\\\\s+"+stop_word+"\\\\s+|^"+stop_word+"\\\\s+|\\\\s+"+stop_word+"$)","ig");
+            cleansed_string = cleansed_string.replace(regex, " ");
         }
+
         cleansed_string = cleansed_string.replace(/\\s\\s+/g, " ");
         cleansed_string = cleansed_string.replace(/^\\s+|\\s+$/g, "");
-
+        
         return cleansed_string;
     };
     var count = function(arr){
       return arr.reduce(function(m,e){
-        e = e.toLowerCase();
         m[e] = (+m[e]||0)+1;
         return m;
         },{});
     };
     self.log("inv in");
-    words = removeStopWords(v.replace(/\\s\\s+/g, " ").replace(/^\\s+|\\s+$/g, "").replace(/[.,]/g,"")).split(" ");
+    words = removeStopWords(v).split(" ");
     countRes = count(words);
     for(k in countRes){
-      self.emit(k,(countRes[k]));
+      self.emit(k,countRes[k]);
     }
     self.log("inv in out");};'
   ireduce: 'function (k, vals) {
@@ -468,7 +475,7 @@ enable_to_process = ->
 lr.pause()
 lr.on 'line', (line)->
   hash[index] = line if !!line # { 0: linea1, 1: linea2, .....}
-  if (index+1) == numLines
+  if (index+1) == (numLines+1)
     if Object.keys(hash).length > 0
       send_data hash, true
     else

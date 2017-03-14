@@ -34,7 +34,7 @@ class BarChart extends Component {
     	bars.enter()
 	        .append("rect")
 	        .attr("fill", function(d, i){
-            return d.color || "orange"
+            return d.color || (d.finished ? "lightgreen" : "lightcoral")
           })
 
 	    bars.transition()
@@ -48,7 +48,10 @@ class BarChart extends Component {
 	        .attr("width", xScale.rangeBand())
 	        .attr("height", function(d, i) {
 	          return yScale(d.value)
-	        });
+	        })
+					.attr("fill", function(d, i){
+            return d.color || (d.finished ? "lightgreen" : "lightcoral")
+          });
 
 	    bars.exit()
 	        .remove();
