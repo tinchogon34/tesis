@@ -129,13 +129,13 @@ switch(options.type) {
 }
 
 // Connect and add records
-MongoClient.connect(url, function(err, conn) {
+MongoClient.connect(url, {}, function(err, conn) {
   assert.ifError(err)
   console.log("Connected correctly to server")
   var tasks = conn.collection("tasks"),
   arr = []
   if (options.clean) {
-    MongoClient.connect(meteordb, function(err, conn) {
+    MongoClient.connect(meteordb, {}, function(err, conn) {
       conn.collection("Tasks").remove({}, function(err, result) {
         assert.ifError(err)
         console.log("DB Tasks (Meteor) Cleaned")

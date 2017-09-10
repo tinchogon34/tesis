@@ -33,11 +33,11 @@ worker = ->
     fs.writeSync fd, "foobar"
     fs.closeSync fd
 
-  MongoClient.connect DB_URL, (err, conn) ->
+  MongoClient.connect DB_URL, {}, (err, conn) ->
     assert.ifError err
     console.log "Conección exitosa a la DB."
 
-    MongoClient.connect METEOR_URL, (err, conn2) ->
+    MongoClient.connect METEOR_URL, {}, (err, conn2) ->
       assert.ifError err
       console.log "Conección exitosa a la DB."
 

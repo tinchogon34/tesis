@@ -172,13 +172,13 @@ workers = ->
         sendData(work, reducing, client)
 
   # Me conecto a la DB de Mongo y guardo la conexion para futuros usos
-  MongoClient.connect MONGO_DB_URL, (err, connection) ->
+  MongoClient.connect MONGO_DB_URL, {}, (err, connection) ->
     assert.ifError err
     assert.ok connection
     mongo_db = connection
 
     # Me conecto a la DB de Meteor y guardo la conexion para futuros usos
-    MongoClient.connect METEOR_DB_URL, (err, connection) ->
+    MongoClient.connect METEOR_DB_URL, {}, (err, connection) ->
       assert.ifError err
       assert.ok connection
       meteor_db = connection

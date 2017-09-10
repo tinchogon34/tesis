@@ -23,20 +23,40 @@ current_workers_num = 0
 
 # Obtengo parametros desde la página que incluye este script
 worker_script = document.getElementById("processor")
-slider_enabled = worker_script.getAttribute("data-slider").toLowerCase() == "true"
-default_workers = if worker_script.getAttribute("data-default-workers") == "max" then navigator.hardwareConcurrency or 1 else parseFloat(worker_script.getAttribute("data-default-workers"))
-min_workers = if worker_script.getAttribute("data-min-workers") == "max" then navigator.hardwareConcurrency or 0 else parseFloat(worker_script.getAttribute("data-min-workers"))
-max_workers = if worker_script.getAttribute("data-max-workers") == "max" then navigator.hardwareConcurrency or 1 else parseFloat(worker_script.getAttribute("data-max-workers"))
+
+slider_enabled = worker_script.getAttribute("data-slider") and worker_script.getAttribute("data-slider").toLowerCase() == "true"
+
+config_default_workers = worker_script.getAttribute("data-default-workers") and switch worker_script.getAttribute("data-default-workers")
+  when "low" then 1
+  when "medium" then (navigator.hardwareConcurrency && Math.ceil(navigator.hardwareConcurrency/2)) or 1
+  when "max" then navigator.hardwareConcurrency or 1
+  else parseFloat(worker_script.getAttribute("data-default-workers"))
+
+config_min_workers = worker_script.getAttribute("data-min-workers") and switch worker_script.getAttribute("data-min-workers")
+  when "low" then 1
+  when "medium" then (navigator.hardwareConcurrency && Math.ceil(navigator.hardwareConcurrency/2)) or 1
+  when "max" then navigator.hardwareConcurrency or 1
+  else parseFloat(worker_script.getAttribute("data-min-workers"))
+
+config_max_workers = worker_script.getAttribute("data-max-workers") and switch worker_script.getAttribute("data-max-workers")
+  when "low" then 1
+  when "medium" then (navigator.hardwareConcurrency && Math.ceil(navigator.hardwareConcurrency/2)) or 1
+  when "max" then navigator.hardwareConcurrency or 1
+  else parseFloat(worker_script.getAttribute("data-max-workers"))
+
+#default_workers = if worker_script.getAttribute("data-default-workers") == "max" then navigator.hardwareConcurrency or 1 else parseFloat(worker_script.getAttribute("data-default-workers"))
+#min_workers = if worker_script.getAttribute("data-min-workers") == "max" then navigator.hardwareConcurrency or 0 else parseFloat(worker_script.getAttribute("data-min-workers"))
+#max_workers = if worker_script.getAttribute("data-max-workers") == "max" then navigator.hardwareConcurrency or 1 else parseFloat(worker_script.getAttribute("data-max-workers"))
 
 # Si hay algun parametro, reemplazo los valores por defecto
-if not isNaN(default_workers)
-  DEFAULT_WORKERS = default_workers
+if not isNaN(config_default_workers)
+  DEFAULT_WORKERS = config_default_workers
 
-if not isNaN(min_workers)
-  MIN_WORKERS_NUM = min_workers
+if not isNaN(config_min_workers)
+  MIN_WORKERS_NUM = config_min_workers
 
-if not isNaN(max_workers)
-  MAX_WORKERS_NUM = max_workers
+if not isNaN(config_max_workers)
+  MAX_WORKERS_NUM = config_max_workers
 
 # Función utilitaria para hacer llamadas AJAX con método GET
 callAjax = (url, callback) ->
