@@ -32,6 +32,7 @@ io.adapter(redis(REDIS_DB_CONFIG))
 # Listado de hosts que pueden hacer CORS
 WHITELIST = [
   'http://localhost:8000',
+  'http://192.168.0.5:8000'
 ]
 
 mongo_db = null
@@ -152,9 +153,16 @@ workers = ->
             task = doc.value
             # Preparo los datos para actualizar la DB de Meteor
 
+            map_results = {}
+            reduce_results = {}
+            for k,v of task.map_results
+              map_results[k] = v.length
+            for k,v of task.reduce_results
+              reduce_results[k] = v
+
             meteor_tasks_collection.findOneAndUpdate {
               task: new ObjectID(task_id)},
-              {$set: {map_results: task.map_results, reduce_results: task.reduce_results, reducing: reducing} },
+              {$set: {map_results: map_results, reduce_results: reduce_results, reducing: reducing} },
               (err) ->
                 if err isnt null
                   console.error "Fallo al actualizar:", err

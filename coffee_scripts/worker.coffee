@@ -81,7 +81,7 @@ self.emit = (key, val) ->
     throw new Error("Key debe ser un String pero es #{typeof key}")
   if val is undefined
     throw new Error("val no debe ser undefined")
-  self.log "emit con #{key} #{val}"
+  #self.log "emit con #{key} #{val}"
   result.push [key, val]
 
 class Cola
@@ -91,7 +91,7 @@ class Cola
   ###
 
   constructor: () ->
-    self.log "Creando Cola"
+    #self.log "Creando Cola"
     @i = 0
     @_data = null
     @_keys = null
@@ -104,50 +104,50 @@ class Cola
     Procesa un elemento de @_data y se espera una ventana de tiempo para
     seguir ejecutando la siguiente
     ###
-    self.log "@_process #{@executing} #{@sleeping}"
+    #self.log "@_process #{@executing} #{@sleeping}"
     if @executing or @sleeping
       return
 
     @executing = true
     if @i < @_keys.length
-      self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
+      #self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
       fn @_keys[@i], @_data[@_keys[@i]]
       @i++
 
     else  # termino de procesar.
-      self.log "termino de procesar"
+      #self.log "termino de procesar"
       @_sendResult()
 
     # Hay una ventana de tiempo entre cada llamada map.
     if not @sleeping
       @_tout = setTimeout(=>
-        self.log "desde el timeout"
+        #self.log "desde el timeout"
         @_process()
       , 50)
     @executing = false
 
   _sendResult: () ->
-    self.log "_sendResult"
+    #self.log "_sendResult"
     @sleep()
-    self.log "_sendResult con ", result
+    #self.log "_sendResult con ", result
 
     send_result()
 
   setData: (data) ->
-    self.log "setData"
+    #self.log "setData"
     result = []
     @i = 0
     @_data = data
     @_keys = Object.keys data
 
   wake: () ->
-    self.log "wake"
+    #self.log "wake"
     return if not @sleeping
     @sleeping = false
     @_process()
 
   sleep: () ->
-    self.log "sleep"
+    #self.log "sleep"
     clearTimeout @_tout
     @sleeping = true
 
@@ -177,9 +177,9 @@ onmessage = (evnt) ->
   msg = evnt.data
   switch msg.type
     when "pause" # Usado para pausar el trabajo del worker en mobile
-      self.log "Pause received"
+      #self.log "Pause received"
       cola.sleep()
 
     when "resume" # Usado para resumir el trabajo del worker en mobile
-      self.log "Resuming received"
+      #self.log "Resuming received"
       cola.wake()

@@ -8,17 +8,17 @@ import BarChart from './BarChart.jsx';
 // App component - represents the whole app
 class App extends Component { 
   mapResultsData(task){
-		if(!task.slices || !task.map_results) return []
+    if(!task.slices || !task.map_results) return []
 		var res = []
 		for(var i=0;i < task.slices;i++){
 			res.push({xLabel: i, value: 0, finished: task.finished})
 		}
 		for(var k in task.map_results){
 			if(res[k]){
-				res[k].value = task.map_results[k].length
+				res[k].value = task.map_results[k]
 			}
 			else{
-				res.push({xLabel: k, value: task.map_results[k].length, finished: task.finished})
+				res.push({xLabel: k, value: task.map_results[k], finished: task.finished})
 			}
 
 		}

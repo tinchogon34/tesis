@@ -11,7 +11,7 @@ assert = require 'assert'
 login_url = 'http://localhost:3003/login'
 tasks_url = 'http://localhost:3003/api/v1/tasks'
 task_results_url = 'http://localhost:3003/api/v1/task_results'
-file = './anillos'
+file = './anillosfull'
 lr = new LineByLineReader(file)
 index = 0
 hash = {}
@@ -37,6 +37,7 @@ newTask =
             "a",
             "acá",
             "ahí",
+            "ahora",
             "ajena",
             "ajeno",
             "ajenas",
@@ -59,6 +60,7 @@ newTask =
             "aquellas",
             "aquellos",
             "aquí",
+            "ari",
             "arriba",
             "así",
             "atrás",
@@ -85,6 +87,8 @@ newTask =
             "consigues",
             "contigo",
             "contra",
+            "creía",
+            "creías",
             "cual",
             "cuales",
             "cualquier",
@@ -105,6 +109,7 @@ newTask =
             "demasiados",
             "dentro",
             "desde",
+            "dijo",
             "donde",
             "dos",
             "el",
@@ -134,8 +139,10 @@ newTask =
             "esas",
             "esos",
             "esta",
+            "está",
             "estas",
             "estaba",
+            "estaban",
             "estabas",
             "estado",
             "estáis",
@@ -166,6 +173,8 @@ newTask =
             "hacia",
             "hago",
             "hasta",
+            "hiciera",
+            "hicieras",
             "incluso",
             "intenta",
             "intentas",
@@ -179,10 +188,12 @@ newTask =
             "junto",
             "juntos",
             "la",
+            "le",
             "lo",
             "las",
             "los",
             "largo",
+            "luego",
             "más",
             "me",
             "menos",
@@ -307,6 +318,8 @@ newTask =
             "tenéis",
             "tenemos",
             "tener",
+            "tenia",
+            "tenía",
             "tengo",
             "ti",
             "tiempo",
@@ -356,7 +369,10 @@ newTask =
             "varias",
             "varios",
             "vaya",
+            "ve",
+            "ver",
             "verdadera",
+            "vez",
             "vosotras",
             "vosotros",
             "voy",
@@ -398,17 +414,25 @@ newTask =
         return m;
         },{});
     };
-    self.log("inv in");
-    words = removeStopWords(v).split(" ");
+    words = removeStopWords(v).split(" ").filter(function(w){return w !== ""});
     countRes = count(words);
-    for(k in countRes){
-      self.emit(k,countRes[k]);
-    }
-    self.log("inv in out");};'
+    self.emit("llave",countRes);};'
   ireduce: 'function (k, vals) {
-    var conc = vals.reduce(function(a, b) {
-      return a + b;});
-    self.emit(k, conc);};'
+    self.log(JSON.stringify(vals));
+    var totals = {};
+    for(var x=0;x<vals.length;x++){
+      var val = vals[x];
+      for(var y=0;y<Object.keys(val).length;y++){
+        var key = Object.keys(val)[y];
+        totals[key] = (totals[key] !== undefined ? totals[key] + val[key] : val[key])
+      }
+    }
+    
+    for(var x=0;x<Object.keys(totals).length;x++){
+      var k = Object.keys(totals)[x];
+      
+      self.emit(k, totals[k]);
+    }};'
 
 # Credenciales de un investigador ejemplo que esta en el seed (init_api_db.js)
 loginCredentials =
