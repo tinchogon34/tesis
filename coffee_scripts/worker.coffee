@@ -10,9 +10,9 @@
   le diga cuando pausarse o resumirse.
 ###
 
-HOST_CONFIG = {host: "localhost", port: "3002"}
+HOST_CONFIG = {host: "tesis.codingways.com", port: "3002"}
 HOST_URL = "http://"+HOST_CONFIG.host+":"+HOST_CONFIG.port
-importScripts(HOST_URL+"/socket.io-1.3.5.js")
+importScripts(HOST_URL+"/socket.io/socket.io.js")
 
 WORK_URL = HOST_URL+"/work"
 DATA_URL = HOST_URL+"/data"

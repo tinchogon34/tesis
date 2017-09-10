@@ -29,26 +29,12 @@ LISTEN_PORT = 3002
 # diferentes procesos del cluster
 io.adapter(redis(REDIS_DB_CONFIG))
 
-# Listado de hosts que pueden hacer CORS
-WHITELIST = [
-  'http://localhost:8000',
-  'http://192.168.0.5:8000'
-]
-
 mongo_db = null
 meteor_db = null
 
-# Habilito efectivamente a los hosts de WHITELIST a hacer CORS
-corsOptions =
-  origin: (origin, callback) ->
-    originIsWhitelisted = WHITELIST.indexOf(origin) != -1
-    callback null, originIsWhitelisted
-    return
-  credentials: true
-
 workers = ->
   # Configuro el Middleware
-  app.use cors(corsOptions)
+  app.use cors()
   app.use(express.static(__dirname + '/public'));
   app.use morgan 'combined'
   app.use bodyParser.json()
