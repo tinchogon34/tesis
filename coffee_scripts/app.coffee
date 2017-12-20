@@ -50,7 +50,6 @@ workers = ->
     tasks_collection.find(REDUCING_QUERY).count (err, _n) ->
       assert.ifError err
       if _n isnt 0
-        console.log "Elijiendo una task aleatoriamente para reducir"
         tasks_collection.find(REDUCING_QUERY).limit(1).skip(_.random(_n - 1)).nextObject((err, task) ->
           assert.ifError err
           callback task, true
@@ -59,9 +58,7 @@ workers = ->
         tasks_collection.find(MAPPING_QUERY).count (err, _n) ->
           assert.ifError err
           if _n is 0
-            console.log "No hay mas tasks :)"
             return callback null
-          console.log "Elijiendo una task aleatoriamente para mapear"
           tasks_collection.find(MAPPING_QUERY).limit(1).skip(_.random(_n - 1)).nextObject((err, task) ->
             assert.ifError err
             callback task, false
@@ -176,7 +173,9 @@ workers = ->
 if cluster.isMaster
   cluster.fork() for [0...numCPUs] # Creo tantos procesos hijos como CPUs
   cluster.on 'exit', (worker) ->
-    console.log "Murió un Worker :("
     cluster.fork() # Si muere un proceso por algun motivo, creo otro
 else
   workers() # Si soy un proceso hijo ejecuto la funcion workers
+
+
+

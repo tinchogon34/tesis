@@ -25,7 +25,7 @@ cola = id = slice = fn = reducing = socket = null
 result = []
 
 get_data = ->
-  # Le avisa al servidor que esta listo para recibir datos
+  # Send message to processor 'ready to process'
   socket.emit 'ready'
 
 process_response = (data) ->
@@ -45,13 +45,12 @@ prepare_data = (data) ->
 
 prepare_result = ->
   ###
-  Antes de enviarlo al server hay que dejar el `result` preparar para
-  aplicarle el `reduce`
+  Before sending result to server, transform it to `reduce` structure
   ###
   res = {}
   result.forEach (element) =>
     if element.length isnt 2
-      console.error "Result mal formado en el worker", result
+      console.error "Result with bad format", result
       return
 
     val = element.pop()
@@ -76,22 +75,19 @@ self.error = (msg) ->
   console.error "[Worker] #{msg}"
 
 self.emit = (key, val) ->
-  # Es usada en el map para insertar un resultado.
+  # Used in map for inserting a result.
   if typeof key isnt "string"
-    throw new Error("Key debe ser un String pero es #{typeof key}")
+    throw new Error("key expected a String but #{typeof key} received")
   if val is undefined
-    throw new Error("val no debe ser undefined")
-  #self.log "emit con #{key} #{val}"
+    throw new Error("val can't be undefined")
   result.push [key, val]
 
 class Cola
   ###
-  Realizar las llamadas a `map` o `reduce`. Se duerme `this.sleeping` ms y
-  continua trabajando.
+  Executes `map` and `reduce` functions. Sleep some time between executions.
   ###
 
   constructor: () ->
-    #self.log "Creando Cola"
     @i = 0
     @_data = null
     @_keys = null
@@ -101,85 +97,73 @@ class Cola
 
   _process: () ->
     ###
-    Procesa un elemento de @_data y se espera una ventana de tiempo para
-    seguir ejecutando la siguiente
+    Process an element from @_data and then wait a time window before processing next
     ###
-    #self.log "@_process #{@executing} #{@sleeping}"
     if @executing or @sleeping
       return
 
     @executing = true
     if @i < @_keys.length
-      #self.log "ejecutando map con #{@_keys[@i]} y #{@_data[@_keys[@i]]}"
       fn @_keys[@i], @_data[@_keys[@i]]
       @i++
 
-    else  # termino de procesar.
-      #self.log "termino de procesar"
+    else  # processing finished
       @_sendResult()
 
-    # Hay una ventana de tiempo entre cada llamada map.
+    # Time window between each execution
     if not @sleeping
       @_tout = setTimeout(=>
-        #self.log "desde el timeout"
         @_process()
       , 50)
     @executing = false
 
   _sendResult: () ->
-    #self.log "_sendResult"
     @sleep()
-    #self.log "_sendResult con ", result
 
     send_result()
 
   setData: (data) ->
-    #self.log "setData"
     result = []
     @i = 0
     @_data = data
     @_keys = Object.keys data
 
   wake: () ->
-    #self.log "wake"
     return if not @sleeping
     @sleeping = false
     @_process()
 
   sleep: () ->
-    #self.log "sleep"
     clearTimeout @_tout
     @sleeping = true
 
 cola = new Cola()
 
-# Crea una conexion por WebSockets al servidor
+# Create connection to server through WebSockets
 socket = io.connect SOCKET_URL,
   transports: [ 'websocket' ]
 
-# Cuando me conecto por primera vez, pido datos
+# When connected, request initial data
 socket.on 'connect', ->
   get_data()
 
-# Cuando recibo un mensaje finish del servidor, le aviso a proc.js que este
-# worker ya termino
+# When finish message received from server, query processor to finish
 socket.on 'finish', ->
   postMessage
     type: "no_more"
 
-# Cuando recibo un mensaje new_work del servidor, proceso los datos
+# When new_work message received from server, process data
 socket.on 'new_work', (data) ->
   process_response(data)
 
-# Maneja los mensajes enviados desde proc.js al worker
+# Manage message received from processor
 onmessage = (evnt) ->
-  # Comunicación con `proc.js`.
   msg = evnt.data
   switch msg.type
-    when "pause" # Usado para pausar el trabajo del worker en mobile
-      #self.log "Pause received"
+    when "pause" # Used in mobile to pause processing
       cola.sleep()
 
-    when "resume" # Usado para resumir el trabajo del worker en mobile
-      #self.log "Resuming received"
+    when "resume" # Used in mobile to resume processing
       cola.wake()
+
+

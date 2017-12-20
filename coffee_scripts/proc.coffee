@@ -141,19 +141,19 @@ createSlider = ->
      label.innerHTML = this.value
      refreshWorkers()
 
-# Permite resumir la ejecucion del worker
+# Resume worker execution
 resume = ->
   for worker in WORKERS
     worker.postMessage
       type: "resume"
 
-# Permite pausar la ejecucion del worker
+# Pause worker execution
 pause = ->
   for worker in WORKERS
     worker.postMessage
       type: "pause"
 
-# Pide el codigo del worker por AJAX y crea los hilos correspondientes (podria servirlo estaticamente tmb?)
+# Request worker code through AJAX and create as many workers as configured
 init = ->
   return resume() if worker_code isnt null
   callAjax WORKER_CODE_URL, (res) ->
@@ -167,8 +167,8 @@ init = ->
 
 # Start working!
 if typeof(Worker) isnt "undefined"
-  console.log '%cComienza proc.js', 'background: #222; color: #bada55;font-size:40px;'
-  # Si es una plataforma mobile esperar cierto tiempo sin tocar la pantalla para empezar a procesar
+  console.log '%Starting proc.js', 'background: #222; color: #bada55;font-size:40px;'
+  # If mobile then wait iddle before start
   if /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     do inactivityTime = ->
       timeout = null
@@ -185,4 +185,4 @@ if typeof(Worker) isnt "undefined"
   else
     init()
 else
-  console.error "Su navegador no soporta WebWorkers :("
+  console.error "Your browser doesn't support WebWorkers :("

@@ -4,7 +4,6 @@
   1) Termino la fase de map y debe empezar la de reduce.
   2) Durante la fase reduce. Adicionalmente detecta cuando termina y mueve la
   tarea a otra Colección.
-
 ###
 # dependencias
 MongoClient = require('mongodb').MongoClient
@@ -20,17 +19,17 @@ MAPPING_QUERY = {$where: "this.available_slices.length > 0 && this.enabled_to_pr
 LOCK_PATH = "/var/tmp/.tesis.lock"
 
 worker = ->
-  # check if there is an other process
+  # check if there is an other process running
   try
     fs.openSync LOCK_PATH, "r"
-    console.log "Ya existe un proceso corriendo el `reducer`."
-    console.log "Si esta seguro que no es asi, $ rm #{LOCK_PATH}"
+    console.log "There's another process running `reducer`."
+    console.log "If you are sure that's not, please execute - rm #{LOCK_PATH}"
     process.exit -1
 
   catch Error
-    # Doesnt exists? OK (y)
+    # Doesnt exists?
     fd = fs.openSync LOCK_PATH, "w"
-    fs.writeSync fd, "foobar"
+    fs.writeSync fd, "locked"
     fs.closeSync fd
 
   MongoClient.connect DB_URL, {}, (err, conn) ->
@@ -52,11 +51,11 @@ worker = ->
 
   mode = (array) ->
     ###
-    Devuelve la moda de un arreglo de cadenas.
+    Return the mode of an array of objects
     ###
 
     assert.notStrictEqual array.length, 0
-    # transformo los obj en str y luego calculo su moda. Ese es el correcto
+    # Transform objects into strings, then calculates mode
     _arr = []
     array.forEach (item) ->
       _arr.push JSON.stringify item
@@ -78,17 +77,17 @@ worker = ->
 
   mapping = (task, coll, conn, conn2) ->
     ###
-    Prepara task para ser reducido.
+    Transform task for reducing
 
-    Debe buscar la moda de los resultados de map para cada slice, el cual se lo
-    considera correcto. Luego une los resultados de los slices y los agrega en
-    `reduce_data`. Finalmente saca de `available_slices` los ya procesado.
+    Get mode in `map_results` for each slice
+    Join slices `map_results` and insert them in `reduce_data`
+    Remove from `available_slices` each map processed slice
     ###
 
     results = task.map_results
     _real_result = {} # sid => result
 
-    # Obtengo la moda de los `maps_results` que tengan mas de 5 valores.
+    # Get mode from `maps_results` with more than 5 results
     for sid, res of results
       if res.length >= 5 and parseInt(sid) in task.available_slices
         _real_result[sid] = mode res
@@ -96,31 +95,31 @@ worker = ->
     if Object.keys(_real_result).length is 0
       return
 
-    console.log("mapeando el task #{task._id}."
+    console.log("mapping task #{task._id}."
       "Available_slices=#{task.available_slices.length}")
 
-    # Busco los sids a eliminar de `available_slices`.
+    # Find slice ids to remove from `available_slices`
     _unavailable_sids = (parseInt sid for sid in Object.keys _real_result)
 
-    # Uno los `map_results` que tengan la misma llave.
+    # Join `map_results` with the same key
     _data = {}
     for sid, reduce_data of _real_result
       for key, vals of reduce_data
         _data[key] = [] unless _data.hasOwnProperty key
         _data[key].push.apply _data[key], vals
 
-    # Preparo los datos para ser reducidos.
+    # Transform data for reducing
     _reduce_data = {}
     for k, vals of _data
       _reduce_data["reduce_data.#{k}"] =
         $each: vals
 
-    # Elimino los `maps_result` ya procesados
+    # Remove processed `maps_result`
     _used_maps_results = {}
     for sid in _unavailable_sids
       _used_maps_results["map_results.#{sid}"] = ""
 
-    # Preparo la consulta
+    # Prepare query
     _update =
       $unset: _used_maps_results
       $push: _reduce_data
@@ -128,7 +127,7 @@ worker = ->
         available_slices: {$in: _unavailable_sids}
       }
 
-    # Ejecuto la consulta
+    # Execute query
     logs = conn2.collection "Tasks"
 
     coll.findOneAndUpdate {_id: task._id}, _update, {returnOriginal: false}, (err, doc) ->
@@ -140,13 +139,19 @@ worker = ->
         map_results[k] = v.length
       for k,v of task.reduce_data
         reduce_data[k] = v.length
-      logs.updateOne {task: task._id}, {$set: {available_slices: task.available_slices,map_results: map_results, reduce_data: reduce_data}}, (err) ->
+      logs.updateOne {task: task._id}, {
+        $set: {
+          available_slices: task.available_slices,
+          map_results: map_results,
+          reduce_data: reduce_data
+        }
+      }, (err) ->
         assert.ifError err
 
   reducing = (task, coll, conn, conn2) ->
     ###
-    Busca en los resultados de *reduce* los correctos. Ademas, Verifica si se
-    termino la tarea. De ser asi, es movido a `task_results`.
+    Get mode in `reduce_results`
+    If task is finished move it to task_results
     ###
 
     results = {}
@@ -161,17 +166,17 @@ worker = ->
     if Object.keys(results).length is 0
       return
 
-    console.log "Esta siendo reducida el task_id: #{task._id}"
+    console.log "Reducing task with task_id: #{task._id}"
 
     for key in Object.keys _real_result
       _unset["reduce_results.#{key}"] = ""
 
-    # Preparo la consulta
+    # Prepare query
     _update =
       $unset: _unset
       $set: results
 
-    # Ejecuto la consulta
+    # Execute query
     logs = conn2.collection "Tasks"
 
     coll.findOneAndUpdate {_id: task._id}, _update, {returnOriginal: false}, (err, doc) ->
@@ -183,7 +188,7 @@ worker = ->
         if _.difference(
           Object.keys(task.reduce_results),
           Object.keys(_real_result)).length is 0
-          console.log "Terminó completamente el task #{task._id}"
+          console.log "Task finished #{task._id}"
 
           task_results = conn.collection "task_results"
           task_result =
@@ -201,7 +206,7 @@ worker = ->
 
   processor = (conn, conn2) ->
     ###
-    Reduce o mapea las task de la db, si no hay pendientes se duerme
+    Executes map and reduce transforms for client processing. Sleeps if not pending tasks
     ###
 
     tasks_collection = conn.collection "tasks"
